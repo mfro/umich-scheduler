@@ -1,0 +1,10 @@
+Set up backend that fetches CSV from office of the registrar
+  - Use etag or last-modified caching
+
+Work on performance
+  - Maybe web workers?
+
+Cleanup
+  - 😬
+  - Also other umich projects
+  - USE NPM BETTER
