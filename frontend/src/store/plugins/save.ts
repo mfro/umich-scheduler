@@ -1,7 +1,7 @@
 import * as Vuex from 'vuex';
 
-import { Course } from '@/store/modules/schedule';
-import Section from '@/sources/section';
+import { Course } from '@/workers/schedule-generator';
+import Section from '@/common/section';
 
 interface SaveFile {
     hidden: number[];
@@ -31,23 +31,23 @@ function load(store: Vuex.Store<any>) {
     }
 
     Promise.every(save.courses, src => {
-        return store.dispatch('schedule/addCourse', { id: src.id }).then(() => {
-            let course = (<Course[]>store.getters['schedule/courses']).find(c => c.id == src.id);
-            store.commit('schedule/setEnabled', { course, enabled: src.enabled });
+        return store.dispatch('generator/addCourse', { id: src.id }).then(() => {
+            let course = (<Course[]>store.getters['generator/courses']).find(c => c.id == src.id);
+            store.commit('generator/setEnabled', { course, enabled: src.enabled });
         })
     }).then(() => {
         let locked = Promise.every(save.locked, id => {
             let section = store.getters['courses/byId'](id);
-            return store.dispatch('schedule/lockSection', section);
+            return store.dispatch('generator/lockSection', section);
         });
 
         let hidden = Promise.every(save.hidden, id => {
             let section = store.getters['courses/byId'](id);
-            store.dispatch('schedule/hideSection', section);
+            store.dispatch('generator/hideSection', section);
         });
 
         return Promise.all([locked, hidden]).then(() => {
-            store.dispatch('schedule/generate');
+            store.dispatch('generator/generate');
         });
     });
 }
@@ -59,13 +59,13 @@ function save(store: Vuex.Store<any>) {
         courses: [],
     };
 
-    for (let section of store.getters['schedule/hidden'] as Section[])
+    for (let section of store.getters['generator/hidden'] as Section[])
         contents.hidden.push(section.id);
 
-    for (let section of store.getters['schedule/locked'] as Section[])
+    for (let section of store.getters['generator/locked'] as Section[])
         contents.locked.push(section.id);
 
-    for (let course of store.getters['schedule/courses'] as Course[])
+    for (let course of store.getters['generator/courses'] as Course[])
         contents.courses.push({
             id: course.id,
             enabled: course.enabled,

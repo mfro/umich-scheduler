@@ -1,9 +1,9 @@
 import * as Vuex from 'vuex-ts';
 
 import * as util from '@/util';
-import * as csv from '@/sources/csv';
 
-import Section from '@/sources/section';
+import request from '@/util/request';
+import Section from '@/common/section';
 
 export const namespaced = true;
 
@@ -24,6 +24,9 @@ interface Mutations {
 interface Actions {
     load: { id: string };
 }
+
+const term = 'winter2018';
+const backend_url = 'http://localhost:8081';
 
 export const state: State = {
     list: []
@@ -62,8 +65,8 @@ export const actions: Vuex.Actions<State, Getters, Mutations, Actions> = {
     load({ commit }, args) {
         if (args.id) {
             let info = util.parseId(args.id);
-
-            return csv.byCourse(info.subject, info.courseId).then(list => {
+            
+            return request<Section[]>(`${backend_url}/terms/${term}/courses/${info.subject}${info.courseId}`).then(list => {
                 commit('add', list);
             });
         }
