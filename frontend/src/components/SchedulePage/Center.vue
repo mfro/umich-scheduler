@@ -16,17 +16,14 @@ export default {
         CalendarView,
     },
 
-    props: {
-        name: String,
-    },
-
     computed: {
         ...mapGetters({
             saved: 'schedules/saved',
         }),
 
         schedule() {
-            return this.saved.find((s) => s.name == this.name);
+            let id = this.$route.params.id;
+            return this.saved.find((s) => s.id == id);
         },
     },
 
@@ -34,6 +31,14 @@ export default {
         if (!this.schedule) {
             this.$router.push('/');
         }
+    },
+
+    watch: {
+        schedule(s) {
+            if (!this.schedule) {
+                this.$router.push('/');
+            }
+        },
     },
 };
 </script>

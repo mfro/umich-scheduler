@@ -1,16 +1,16 @@
-import Vuex, { Store } from 'vuex';
 import Vue from 'vue';
+import Vuex from 'vuex';
 
 declare const require: any;
 
-
 const mContext = require.context('./modules', false, /.ts$/);
-const modules: any = {};
+const modules = {};
+
 for (let key of mContext.keys()) {
     let split = key.split(/[/.]/);
     let name = split[split.length - 2];
     let mod = mContext(key);
-    modules[name] = mod;
+    (<any>modules)[name] = mod;
 }
 
 const pContext = require.context('./plugins', false, /.ts$/);
@@ -21,7 +21,7 @@ for (let key of pContext.keys()) {
 }
 
 Vue.use(Vuex);
-export default new Store({
+export default new Vuex.Store({
     modules,
     plugins,
 });

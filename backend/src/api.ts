@@ -3,6 +3,8 @@ import * as express from 'express';
 import * as terms from './terms';
 import * as schedule from './schedule';
 
+import Course from '../../common/course';
+
 const app = express();
 
 app.use((req, res, next) => {
@@ -12,11 +14,9 @@ app.use((req, res, next) => {
 
 app.get('/terms/:term/courses/:id', (req, res, next) => {
     let id: string = req.params.id;
-    let match = /(\D+)\s*(\d+)/.exec(id)!;
+    let course = Course.parse(id);
 
     let termId = req.params.term;
-    let courseId = parseInt(match[2]);
-    let subject = match[1];
 
     let term = terms.parse(termId);
 
@@ -27,8 +27,7 @@ app.get('/terms/:term/courses/:id', (req, res, next) => {
     }
 
     schedule.find(term, s => {
-        return s.courseId == courseId
-            && s.subject.includes(`(${subject})`);
+        return course.isSection(s);
     }).then(list => {
         res.statusCode = 200;
         res.json(list);

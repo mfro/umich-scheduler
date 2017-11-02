@@ -1,7 +1,10 @@
 declare module 'vuex-ts' {
     interface Context<TState, TGetters, TMutations, TActions> {
         state: TState;
+        rootState: any;
+
         getters: TGetters;
+        rootGetters: any;
 
         commit<T extends keyof TMutations>(type: T): void;
         dispatch<T extends keyof TActions>(type: T): Promise<void>;
@@ -20,7 +23,7 @@ declare module 'vuex-ts' {
     }
 
     type Getters<TState, TGetters> = {
-        [key in keyof TGetters]: (state: TState, getters: TGetters) => TGetters[key];
+        [key in keyof TGetters]: (state: TState, getters: TGetters, rootState: any, rootGetters: any) => TGetters[key];
     }
 
     type Mutations<TState, TMutations> = {

@@ -40,8 +40,8 @@ module.exports = {
   resolve: {
     extensions: ['.js', '.ts', '.vue', '.json'],
     alias: {
-      '@': resolve('src'),
-      '@/common': resolve('../common')
+      '@/common': resolve('../common'),
+      '@': resolve('src')
     }
   },
   module: {

@@ -1,7 +1,7 @@
 <template>
     <div class="course" @click="toggle()">
-        <input type="checkbox" :checked="course.enabled"/>
-        <span class="id">{{ course.id }}</span>
+        <md-checkbox class="checkbox" v-model="course.enabled"/>
+        <span class="id">{{ course.course.toString() }}</span>
     </div>
 </template>
 
@@ -15,10 +15,7 @@ export default {
 
     methods: {
         toggle() {
-            this.$store.commit('generator/setEnabled', {
-                course: this.course,
-                enabled: !this.course.enabled,
-            });
+            this.$store.commit('generator/TOGGLE_ENABLED', this.course.course);
 
             this.$store.dispatch('generator/generate');
         },
@@ -29,10 +26,12 @@ export default {
 <style lang="less" scoped>
 .course {
     cursor: pointer;
-    padding: 5px 0;
-    margin-top: 5px;
     display: flex;
     align-items: center;
+}
+
+.checkbox {
+    pointer-events: none;
 }
 
 input {

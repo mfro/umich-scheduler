@@ -1,6 +1,11 @@
 import * as Vuex from 'vuex-ts';
 
+import * as save from '@/store/plugins/save';
+
 export const namespaced = true;
+
+save.add('settings.dayEnd');
+save.add('settings.dayStart');
 
 interface State {
     dayStart: number;

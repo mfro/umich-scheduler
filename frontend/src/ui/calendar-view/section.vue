@@ -1,5 +1,5 @@
 <template>
-    <div class="section" :class="{ lock: block.isLock, hidden: block.isHidden, interactive }" :style="style" @mouseup="onClick" @contextmenu.prevent="onContextMenu">
+    <div class="section" :class="classes" :style="style" @mouseup="onClick" @contextmenu.prevent="onContextMenu">
         <div class="sideline" :style="sidelineStyle"/>
 
         <div class="content">
@@ -22,7 +22,7 @@
                     </div>
 
                     <div class="occurences">
-                        <span v-if="block.occurences">{{ block.occurences }}</span>
+                        <span v-if="block.isPreview">{{ block.occurences }}</span>
                     </div>
                 </div>
             </div>
@@ -30,16 +30,15 @@
     </div>
 </template>
 
-<script>
+<script lang="js">
 import { mapGetters } from 'vuex';
-
-import * as util from '@/util';
 
 export default {
     name: 'calendar-section',
 
     props: {
         block: Object,
+        group: Object,
         interactive: Boolean,
     },
 
@@ -65,22 +64,28 @@ export default {
         },
 
         style() {
-            let time = util.parseTime(this.block.section.time);
-
-            let top = (time.start - this.dayStart) / (this.dayEnd - this.dayStart);
-            let bot = (time.end - this.dayStart) / (this.dayEnd - this.dayStart);
+            let top = (this.block.start - this.dayStart) / (this.dayEnd - this.dayStart);
+            let bot = (this.block.end - this.dayStart) / (this.dayEnd - this.dayStart);
             let height = bot - top;
 
             return {
-                width: `calc(100% - ${8 * (this.block.groupSize - 1)}px)`,
+                width: `calc(100% - ${8 * (this.group.size - 1)}px)`,
                 height: 100 * height + 'vh',
                 marginTop: 100 * top + 'vh',
-                marginLeft: `${8 * this.block.groupIndex}px`,
+                marginLeft: `${8 * this.group.index}px`,
+            };
+        },
+
+        classes() {
+            return {
+                lock: this.block.isGenerated && this.block.isLocked,
+                hidden: this.block.isPreview && this.block.isHidden,
+                interactive: this.interactive,
             };
         },
 
         color() {
-            if (this.block.occurences === 0) {
+            if (this.block.isPreview && this.block.occurences == 0) {
                 return 'gray';
             }
 
@@ -215,4 +220,3 @@ export default {
     }
 }
 </style>
-

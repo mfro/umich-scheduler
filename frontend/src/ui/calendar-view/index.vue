@@ -33,6 +33,7 @@
 import { mapGetters } from 'vuex';
 
 import CalendarDay from './day.vue';
+import Block from '@/workers/block';
 
 const days = [
     { name: 'Monday', id: 'M' },
@@ -94,7 +95,6 @@ export default {
             let target = this.previewTarget;
             if (!target) return this.blocks;
 
-            let type = target.section.component;
             let flag;
             if (target.section.flags.includes('P')) {
                 flag = 'P';
@@ -107,22 +107,23 @@ export default {
             }
 
             let hidden = this.$store.getters['generator/hidden'];
-            let sections = this.$store.getters['courses/byCourse'](target.course.id);
-            let generated = this.$store.getters['generator/generated'];
+            let sections = this.$store.getters['courses/all'].filter((c) => {
+                return c.courseId == target.section.courseId &&
+                    c.subject == target.section.subject &&
+                    c.component == target.section.component &&
+                    c.flags.includes(flag);
+            });
+            let generated = this.$store.getters['generator/all'];
 
-            let previewing = sections.filter((s) => {
-                return s.flags.includes(flag) && s.component == type;
-            }).map((s) => ({
-                isLock: false,
-                isHidden: hidden.indexOf(s) != -1,
-                occurences: generated.filter((list) => list.find((b) => b.section == s)).length,
+            let previewing = sections.map((s) => {
+                let isHidden = hidden.find((s2) => s2.id == s.id) != null;
+                let occurences = generated.filter(
+                    (list) => list.find((b) => b.section == s)).length;
 
-                color: target.color,
-                course: target.course,
-                section: s,
-            }));
+                return new Block.PreviewCourse(target.color, s, isHidden, occurences);
+            });
 
-            let base = this.blocks.filter((a) => a.isLock);
+            let base = this.blocks.filter((a) => a.isLocked);
             return base.concat(previewing.filter((a) => {
                 if (base.find((a2) => a2.section.id == a.section.id)) {
                     return false;
@@ -136,6 +137,7 @@ export default {
     methods: {
         onHide(block) {
             if (!this.interactive) return;
+            if (!block.isCourse) return;
 
             this.$store.dispatch('generator/hideSection', block.section).then(() => {
                 this.$store.dispatch('generator/generate');
@@ -144,8 +146,9 @@ export default {
 
         onLock(block) {
             if (!this.interactive) return;
+            if (!block.isCourse) return;
 
-            if (block == this.previewTarget && !block.isLock) {
+            if (this.previewTarget && !block.isLocked) {
                 this.previewTarget = null;
             }
 

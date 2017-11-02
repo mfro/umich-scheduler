@@ -1,14 +1,20 @@
 <template>
     <div class="settings">
-        <div class="setting">
-            <span>Day start:</span>
-            <input type="number" :value="dayStart" @input="setDayStart(+$event.target.value)"/>
-        </div>
-        
-        <div class="setting">
-            <span>Day end:</span>
-            <input type="number" :value="dayEnd" @input="setDayEnd(+$event.target.value)"/>
-        </div>
+        <uikit-toolbox>
+            <span slot="header">Settings</span>
+
+            <div class="contents">
+                <div class="setting">
+                    <span>Day start:</span>
+                    <input type="number" :value="dayStart" @input="setDayStart(+$event.target.value)"/>
+                </div>
+                
+                <div class="setting">
+                    <span>Day end:</span>
+                    <input type="number" :value="dayEnd" @input="setDayEnd(+$event.target.value)"/>
+                </div>
+            </div>
+        </uikit-toolbox>
     </div>
 </template>
 
@@ -37,13 +43,16 @@ export default {
 .settings {
     display: flex;
     flex-direction: column;
-    padding: 10px;
+}
+
+.contents {
+    padding: 0 7px 8px 7px;
 }
 
 .setting {
     display: flex;
     flex-direction: column;
-    margin-top: 10px;
+    margin-top: 8px;
 
     span {
         margin-bottom: 6px;

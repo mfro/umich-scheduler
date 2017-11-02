@@ -1,6 +1,6 @@
 <template>
-    <router-link class="saved-schedule" :to="'/schedules/' + schedule.name">
-        <span class="name">{{ schedule.name }}</span>
+    <router-link :to="path" class="saved-schedule">
+        <span class="name">{{ name }}</span>
     </router-link>
 </template>
 
@@ -9,7 +9,25 @@ export default {
     name: 'saved-schedule',
 
     props: {
-        schedule: Object,
+        schedule: { type: Object, default: null },
+    },
+
+    computed: {
+        path() {
+            if (!this.schedule) {
+                return `/schedules/generated`;
+            }
+
+            return `/schedules/${this.schedule.id}`;
+        },
+
+        name() {
+            if (!this.schedule) {
+                return 'Generated';
+            }
+
+            return this.schedule.name;
+        },
     },
 };
 </script>
@@ -18,13 +36,17 @@ export default {
 .saved-schedule {
     display: block;
     cursor: pointer;
-    padding: 5px 0;
-    margin-top: 5px;
+    padding: 8px 5px 6px 5px;
+    margin-top: 4px;
     display: flex;
     align-items: center;
 
     color: inherit;
     text-decoration: none;
+
+    &.router-link-active {
+        background: lightblue;
+    }
 }
 </style>
 

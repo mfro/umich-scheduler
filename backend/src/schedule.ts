@@ -1,5 +1,5 @@
 import { Term } from './terms';
-import Section from '@/common/section';
+import Section from '../../common/section';
 
 import * as fs from 'fs';
 import * as url from 'url';
@@ -28,7 +28,7 @@ export function find(term: Term, predicate: (section: Section) => boolean) {
 
             src.on('line', line => {
                 total++;
-                let section = parseSection(line);
+                let section = Section.parse(line);
 
                 if (!section) return;
                 if (!predicate(section)) return;
@@ -41,41 +41,6 @@ export function find(term: Term, predicate: (section: Section) => boolean) {
             });
         });
     });
-}
-
-function parseSection(line: string): Section | null {
-    let regex = /"([^"]*)",/g;
-    let match;
-
-    let cols = [];
-    while (match = regex.exec(line)) {
-        cols.push(match[1].trim());
-    }
-
-    if (cols.length == 0) return null;
-
-    return {
-        term: cols[0],
-        session: cols[1],
-        academicGroup: cols[2],
-        id: parseInt(cols[3]),
-        subject: cols[4],
-
-        courseId: parseInt(cols[5]),
-        sectionId: parseInt(cols[6]),
-
-        title: cols[7],
-        component: cols[8],
-        flags: cols[9],
-
-        days: cols.slice(10, 17).filter(d => d != ''),
-        startDate: cols[17],
-        endDate: cols[18],
-        time: cols[19],
-        location: cols[20],
-        instructor: cols[21],
-        credits: cols[22],
-    };
 }
 
 function getSchedule(term: Term) {

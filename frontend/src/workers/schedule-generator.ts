@@ -1,21 +1,4 @@
-import * as util from '@/util';
-
 import Section from '@/common/section';
-
-import * as store from '@/store';
-
-export interface Course {
-    id: string;
-    enabled: boolean;
-}
-
-export interface Block {
-    isLock: boolean;
-
-    color: string;
-    course: Course;
-    section: Section;
-}
 
 const colors = [
     '#16a765',
@@ -31,29 +14,41 @@ const colors = [
     '#cabdbf',
 ];
 
-export function generate(courses: Course[]) {
-    let enabled = courses.filter(c => c.enabled);
-
-    let list: Block[][] = [];
-
-    buildHelper([], enabled, 0, list);
-
-    return Promise.resolve(list);
+export interface GenerateRequest {
+    courses: Section[][];
+    hidden: number[];
+    locked: number[];
 }
 
-function buildHelper(base: Block[], courses: Course[], index: number, target: Block[][]) {
-    if (index == courses.length) {
+export interface GBlock {
+    color: string;
+    locked: boolean;
+    section: Section;
+}
+
+export function generate(request: GenerateRequest) {
+    let list: GBlock[][] = [];
+
+    buildHelper([], request, 0, list);
+
+    let sim = list.map(l => l.map(b => ({
+        id: b.section.id,
+        color: b.color,
+        locked: b.locked,
+    })));
+
+    return Promise.resolve(sim);
+}
+
+function buildHelper(base: GBlock[], request: GenerateRequest, index: number, target: GBlock[][]) {
+    if (index == request.courses.length) {
         target.push(base);
 
         return target.length < 1000;
     }
 
-    let course = courses[index];
-
-    let sections = getSections(course.id);
-    let locked = (<Section[]>store.default.getters['generator/locked']).filter(s => {
-        return util.matchSection(course.id, s);
-    });
+    let sections = request.courses[index];
+    let locked = sections.filter(s => request.locked.indexOf(s.id) != -1);
 
     let pLock = locked.find(s => s.flags.includes('P'));
     let aLocks = locked.filter(s => s.flags.includes('A'));
@@ -63,7 +58,7 @@ function buildHelper(base: Block[], courses: Course[], index: number, target: Bl
     if (pLock)
         primaries = [pLock];
     else
-        primaries = findPrimaries(course.id, aLocks);
+        primaries = findPrimaries(sections, aLocks);
 
     let secondaries;
     if (sLock)
@@ -72,21 +67,21 @@ function buildHelper(base: Block[], courses: Course[], index: number, target: Bl
         secondaries = sections.filter(s => s.flags.includes('S'));
 
     for (let primary of primaries) {
-        if (!fits(base, primary))
+        if (!fits(base, primary, request))
             continue;
 
-        let withPrimary = add(base, primary, course);
+        let withPrimary = add(base, primary, request);
 
-        let autos = findAutoEnrolls(course.id, primary);
+        let autos = findAutoEnrolls(sections, primary);
         let isValid = true;
 
         for (let auto of autos) {
-            if (!fits(withPrimary, auto)) {
+            if (!fits(withPrimary, auto, request)) {
                 isValid = false;
                 break;
             }
 
-            withPrimary = add(withPrimary, auto, course);
+            withPrimary = add(withPrimary, auto, request);
         }
 
         if (!isValid) {
@@ -94,17 +89,17 @@ function buildHelper(base: Block[], courses: Course[], index: number, target: Bl
         }
 
         if (secondaries.length == 0) {
-            if (!buildHelper(withPrimary, courses, index + 1, target))
+            if (!buildHelper(withPrimary, request, index + 1, target))
                 return false;
             continue;
         }
 
         for (let secondary of secondaries) {
-            if (!fits(withPrimary, secondary))
+            if (!fits(withPrimary, secondary, request))
                 continue;
 
-            let withSecondary = add(withPrimary, secondary, course);
-            if (!buildHelper(withSecondary, courses, index + 1, target))
+            let withSecondary = add(withPrimary, secondary, request);
+            if (!buildHelper(withSecondary, request, index + 1, target))
                 return false;
         }
     }
@@ -112,24 +107,16 @@ function buildHelper(base: Block[], courses: Course[], index: number, target: Bl
     return true;
 }
 
-function getSections(courseId: string) {
-    let list = <Section[]>store.default.getters['courses/byCourse'](courseId);
-
-    return list;
-}
-
-function findPrimaries(courseId: string, autos: Section[]) {
-    let sections = getSections(courseId);
-
+function findPrimaries(sections: Section[], autos: Section[]) {
     let nexts = autos.map(a => sections.reduce((best, s) => {
         if (!s.flags.includes('A'))
             return best;
         if (a.component != s.component || a.sectionId >= s.sectionId)
             return best;
-        if (!best || (s.sectionId < (<any>best).sectionId))
+        if (!best || (s.sectionId < best.sectionId))
             return s;
         return best;
-    }, null));
+    }, <Section><any>null));
 
     return sections.filter(s => {
         if (!s.flags.includes('P'))
@@ -147,9 +134,7 @@ function findPrimaries(courseId: string, autos: Section[]) {
     });
 }
 
-function findAutoEnrolls(courseId: string, primary: Section) {
-    let sections = getSections(courseId);
-
+function findAutoEnrolls(sections: Section[], primary: Section) {
     let bests = new Map<string, Section>();
 
     for (let section of sections) {
@@ -168,14 +153,12 @@ function findAutoEnrolls(courseId: string, primary: Section) {
     return [...bests.values()];
 }
 
-function fits(schedule: Block[], section: Section) {
-    let hidden = <Section[]>store.default.getters['generator/hidden'];
-
-    if (hidden.indexOf(section) != -1)
+function fits(schedule: GBlock[], section: Section, request: GenerateRequest) {
+    if (request.hidden.indexOf(section.id) != -1)
         return false;
 
     for (let existing of schedule) {
-        if (overlap(section, existing.section)) {
+        if (!section.isCompatible(existing.section)) {
             return false;
         }
     }
@@ -183,11 +166,9 @@ function fits(schedule: Block[], section: Section) {
     return true;
 }
 
-function add(schedule: Block[], section: Section, course: Course) {
-    if (!fits(schedule, section))
+function add(schedule: GBlock[], section: Section, request: GenerateRequest) {
+    if (!fits(schedule, section, request))
         throw new Error('Section does not fit');
-
-    let locked = <Section[]>store.default.getters['generator/locked'];
 
     let color;
 
@@ -200,37 +181,12 @@ function add(schedule: Block[], section: Section, course: Course) {
     if (!color) color = 'gray';
 
     let copy = schedule.slice();
+
     copy.push({
-        isLock: locked.indexOf(section) != -1,
-
         color: color,
-
-        course: course,
+        locked: request.locked.indexOf(section.id) != -1,
         section: section,
     });
 
     return copy;
-}
-
-function overlap(a: Section, b: Section) {
-    let days = ['M', 'T', 'W', 'TH', 'F', 'S', 'SU'];
-
-    for (let day of days) {
-        if (a.days.indexOf(day) < 0 ||
-            b.days.indexOf(day) < 0)
-            continue;
-
-        let aTime = util.parseTime(a.time);
-        let bTime = util.parseTime(b.time);
-
-        if (bTime.start >= aTime.start && bTime.start < aTime.end)
-            return true;
-
-        if (aTime.start >= bTime.start && aTime.start < bTime.end)
-            return true;
-
-        return false;
-    }
-
-    return false;
 }

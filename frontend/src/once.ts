@@ -11,11 +11,11 @@ Promise.each = function each<T>(list: T[], one?: any, two?: any){
 
     let queue = list.slice();
 
-    function helper() {
+    function helper(): Promise<any> {
         let item = queue.shift();
         if (!item) return outcome;
 
-        let temp = (impl == 2 ? two(item, outcome) : one(item));
+        let temp = Promise.resolve(impl == 2 ? two(item, outcome) : one(item));
 
         return temp.then((v: any) => {
             if (impl == 2)

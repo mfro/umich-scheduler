@@ -16,6 +16,7 @@ const babelLoader = {
 };
 
 module.exports = {
+  preserveWhitespace: false,
   loaders: Object.assign({}, utils.cssLoaders({
     sourceMap: isProduction
       ? config.build.productionSourceMap

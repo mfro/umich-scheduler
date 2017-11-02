@@ -1,28 +1,28 @@
 import * as Vuex from 'vuex-ts';
 
-import * as util from '@/util';
-
 import request from '@/util/request';
+
+import Course from '@/common/course';
 import Section from '@/common/section';
 
 export const namespaced = true;
 
-interface State {
+export interface State {
     list: Section[];
 }
 
-interface Getters {
+export interface Getters {
     all: Section[];
-    byCourse(myId: string): Section[];
+    byCourse(myId: Course): Section[];
     byId(id: number): Section | null;
 }
 
-interface Mutations {
+export interface Mutations {
     add: Section | Section[];
 }
 
-interface Actions {
-    load: { id: string };
+export interface Actions {
+    load: Course;
 }
 
 const term = 'winter2018';
@@ -37,8 +37,8 @@ export const getters: Vuex.Getters<State, Getters> = {
         return state.list;
     },
 
-    byCourse: (state, getters) => (myId) => {
-        return getters.all.filter(s => util.matchSection(myId, s));
+    byCourse: (state, getters) => (course) => {
+        return getters.all.filter(s => course.isSection(s));
     },
 
     byId: (state, getters) => (id) => {
@@ -62,13 +62,14 @@ export const mutations: Vuex.Mutations<State, Mutations> = {
 };
 
 export const actions: Vuex.Actions<State, Getters, Mutations, Actions> = {
-    load({ commit }, args) {
-        if (args.id) {
-            let info = util.parseId(args.id);
-            
-            return request<Section[]>(`${backend_url}/terms/${term}/courses/${info.subject}${info.courseId}`).then(list => {
-                commit('add', list);
-            });
-        }
+    load({ commit }, course) {
+        if (!(course instanceof Course))
+            throw new Error('Got invalid course: ' + course);
+
+        return request<any[]>(`${backend_url}/terms/${term}/courses/${course}`).then(list => {
+            let sections = list.map(Section.deserialize);
+
+            commit('add', sections);
+        });
     },
 };

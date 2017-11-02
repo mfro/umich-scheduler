@@ -1,69 +1,44 @@
 <template>
     <div class="generated-schedules-sidebar">
-        <schedule-courses/>
-        
-        <div class="save-form">
-            <h3>Save schedule:</h3>
+        <md-card class="options">
+            <md-toolbar class="md-dense md-transparent">
+                <div class="md-title">Schedule generator</div>
+            </md-toolbar>
 
-            <input type="text" class="name-input" v-model="nameInput"/>
-            <button class="submit" :disabled="!isValid" @click="onSave">Save</button>
-        </div>
+            <md-card-area>
+                <md-tabs md-fixed class="tabs md-transparent">
+                    <md-tab md-icon="edit">
+                        <generator-input/>
+                    </md-tab>
+
+                    <md-tab md-icon="save">
+                        <generator-save/>
+                    </md-tab>
+                </md-tabs>
+            </md-card-area>
+        </md-card>
     </div>
 </template>
 
 <script>
-import { mapGetters } from 'vuex';
-
-import ScheduleCourses from './courses';
+import GeneratorInput from './generator-input';
+import GeneratorSave from './generator-save';
 
 export default {
-    name: 'save-schedule-form',
+    name: 'generated-schedules-sidebar',
 
     components: {
-        ScheduleCourses,
-    },
-
-    data() {
-        return {
-            nameInput: 'Untitled',
-        };
-    },
-
-    computed: {
-        ...mapGetters({
-            current: 'generator/current',
-            saved: 'schedules/saved',
-        }),
-
-        isValid() {
-            return this.nameInput && this.current && this.current.length > 0;
-        },
-    },
-
-    methods: {
-        onSave() {
-            const schedule = {
-                name: this.nameInput,
-                blocks: this.current.map((b) => ({
-                    color: b.color,
-                    course: { id: b.course.id },
-                    section: b.section,
-                })),
-            };
-
-            this.$store.commit('schedules/save', schedule);
-        },
+        GeneratorInput,
+        GeneratorSave,
     },
 };
 </script>
 
 <style lang="less" scoped>
-.save-form {
-    padding: 10px;
-    
-    .name-input {
-        margin-right: 10px;
-    }
+.options {
+    margin: 16px;
+}
+
+.tabs {
 }
 </style>
-

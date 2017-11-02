@@ -4,9 +4,6 @@
         "module": "es2015",
         "moduleResolution": "node",
 
-        "experimentalDecorators": true,
-        
-        "allowJs": true,
         "allowSyntheticDefaultImports": true,
         
         "alwaysStrict": true,
@@ -14,13 +11,12 @@
         "noUnusedLocals": true,
         "noImplicitThis": true,
         "strictNullChecks": true,
+        "strictFunctionTypes": true,
 
         "outDir": "build/tsc",
 
         "baseUrl": ".",
-        
         "paths": {
-            "this": ["src"],
             "@/*": ["src/*"],
             "@/common/*": ["../common/*"]
         }

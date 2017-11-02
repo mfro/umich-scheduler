@@ -20,15 +20,17 @@ import { mapGetters } from 'vuex';
 import CalendarView from '@/ui/calendar-view';
 
 export default {
+    name: 'generated-schedules',
+
     components: {
         CalendarView,
     },
 
     computed: {
         ...mapGetters({
-            index: 'generator/index',
+            index: 'generator/currentIndex',
             generated: 'generator/current',
-            schedules: 'generator/generated',
+            schedules: 'generator/all',
         }),
 
         current() {
@@ -46,7 +48,8 @@ export default {
 
     methods: {
         nav(offset) {
-            this.$store.commit('generator/select', offset);
+            let index = this.index + offset;
+            this.$store.commit('generator/SET_INDEX', index);
         },
 
         onKeyDown(e) {

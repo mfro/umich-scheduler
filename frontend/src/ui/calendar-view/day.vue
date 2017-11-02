@@ -1,13 +1,11 @@
 <template>
     <div class="day">
-        <calendar-section v-for="block in sorted" :key="block.section.id" :block="block" :interactive="interactive"
+        <calendar-section v-for="a in sorted" :key="a.block.section.id" :block="a.block" :group="a.group" :interactive="interactive"
             @hide="onHide" @lock="onLock" @preview="onPreview"/>
     </div>
 </template>
 
 <script>
-import * as util from '@/util';
-
 import CalendarSection from './section.vue';
 
 export default {
@@ -28,34 +26,34 @@ export default {
             let list = this.blocks.filter((s) => {
                 return s.section.days.includes(this.day);
             }).map((s) => ({
-                ...s,
-                time: util.parseTime(s.section.time),
+                block: s,
+                group: {},
             })).sort((a, b) => {
-                if (a.time.start != b.time.start) {
-                    return a.time.start - b.time.start;
+                if (a.block.start != b.block.start) {
+                    return a.block.start - b.block.start;
                 }
-                return a.time.end - b.time.end;
+                return a.block.end - b.block.end;
             });
 
             let currentGroupEnd = -1;
             let currentGroup = [];
             for (let item of list) {
-                if (currentGroupEnd <= item.time.start) {
+                if (currentGroupEnd <= item.block.start) {
                     for (let i = 0; i < currentGroup.length; i++) {
-                        currentGroup[i].groupSize = currentGroup.length;
-                        currentGroup[i].groupIndex = i;
+                        currentGroup[i].group.size = currentGroup.length;
+                        currentGroup[i].group.index = i;
                     }
 
                     currentGroup = [];
                 }
 
                 currentGroup.push(item);
-                currentGroupEnd = item.time.end;
+                currentGroupEnd = item.block.end;
             }
 
             for (let i = 0; i < currentGroup.length; i++) {
-                currentGroup[i].groupSize = currentGroup.length;
-                currentGroup[i].groupIndex = i;
+                currentGroup[i].group.size = currentGroup.length;
+                currentGroup[i].group.index = i;
             }
 
             return list;
