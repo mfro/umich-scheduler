@@ -7,7 +7,7 @@
         <div class="row">
             <md-input-container>
                 <label>Course ID</label>
-                <md-input v-model="rawInput"/>
+                <md-input v-model="rawInput" @keydown.native="onKeyDown"/>
             </md-input-container>
 
             <md-button class="md-icon-button" :disabled="!course" @click="submit()">
@@ -58,7 +58,7 @@ export default {
 
             this.$store.dispatch('courses/load', this.course, { root: true }).then(() => {
                 return this.$store.dispatch('generator/toggleCourse', this.course).then(() => {
-                    this.courseInput = '';
+                    this.rawInput = '';
                     return this.$store.dispatch('generator/generate');
                 });
             });
@@ -66,6 +66,14 @@ export default {
 
         reset() {
             this.$store.dispatch('generator/reset');
+        },
+
+        onKeyDown(e) {
+            if (e.keyCode != 13 || !this.course) {
+                return;
+            }
+
+            this.submit();
         },
     },
 };

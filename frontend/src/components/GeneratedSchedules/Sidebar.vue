@@ -96,9 +96,9 @@ export default {
     opacity: 0;
     pointer-events: none;
 
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
 
     .display {
         flex: 0 0 10%;

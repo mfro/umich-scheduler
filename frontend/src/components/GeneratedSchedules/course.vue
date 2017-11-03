@@ -1,12 +1,12 @@
 <template>
-    <md-list-item @click="toggle()">
+    <md-list-item @click="toggle()" class="course">
         <md-checkbox class="checkbox" :value="course.enabled"/>
         <span class="id">{{ course.course.toString() }}</span>
+
+        <md-button class="md-icon-button delete" @click="remove()">
+            <md-icon>delete</md-icon>
+        </md-button>
     </md-list-item>
-    <!-- <div class="course" @click="toggle()">
-        <md-checkbox class="checkbox" :value="course.enabled"/>
-        <span class="id">{{ course.course.toString() }}</span>
-    </div> -->
 </template>
 
 <script>
@@ -23,15 +23,21 @@ export default {
 
             this.$store.dispatch('generator/generate');
         },
+
+        remove() {
+            this.$store.dispatch('generator/toggleCourse', this.course.course).then(() => {
+                this.$store.dispatch('generator/generate');
+            });
+        },
     },
 };
 </script>
 
 <style lang="less" scoped>
 .course {
-    cursor: pointer;
-    display: flex;
-    align-items: center;
+    &:hover .delete {
+        opacity: 1;
+    }
 }
 
 .checkbox {
@@ -40,6 +46,10 @@ export default {
 
 .id {
     flex: 1 1;
+}
+
+.delete {
+    opacity: 0;
 }
 </style>
 

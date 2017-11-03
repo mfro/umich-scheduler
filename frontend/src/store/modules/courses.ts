@@ -26,7 +26,11 @@ export interface Actions {
 }
 
 const term = 'winter2018';
-const backend_url = 'http://localhost:8081';
+let backend_url: string;
+if (location.hostname == 'mfro.me')
+    backend_url = 'https://api.mfro.me/scheduler'
+else
+    backend_url = 'http://localhost:8081'
 
 export const state: State = {
     list: []
