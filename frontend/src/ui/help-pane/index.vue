@@ -10,6 +10,8 @@
                     <p>Add courses at the left side of the screen. Example: <pre>MATH 215</pre></p>
                     
                     <p>Courses can be toggled off to exclude them from the schedule.</p>
+                    
+                    <p>Find courses using the <a href="https://www.lsa.umich.edu/cg/" target="_blank">course guide</a>.</p>
                 </md-board>
                 
                 <md-board>
@@ -19,11 +21,11 @@
 
                     <p>Use the calendar view to select and custmize sections.</p>
                     
-                    <p>- Left click 'locks' a section</p>
+                    <p>- Left click or Q 'locks' a section</p>
                     
-                    <p>- Middle click previews alternatives to a section</p>
+                    <p>- Middle click or W previews alternatives to a section</p>
                     
-                    <p>- Right click 'hides' a section</p>
+                    <p>- Right click or E 'hides' a section</p>
                 </md-board>
                 
                 <md-board>
@@ -41,33 +43,6 @@
                     </p>
                 </md-board>
             </md-boards>
-
-
-            <!-- <md-list class="md-dense">
-                <md-list-item>
-                    <span>1. Add courses at the left side of the screen. Example: <pre>MATH 215</pre></span>
-                </md-list-item>
-                
-                <md-list-item>
-                    2. Customize schedule using the calendar view
-                </md-list-item>
-                    
-                <md-list-item>
-                    <md-list class="md-dense sublist">
-                        <md-list-item>
-                            - Left click 'locks' a section
-                        </md-list-item>
-                        
-                        <md-list-item>
-                            - Middle click previews alternatives to a section
-                        </md-list-item>
-                        
-                        <md-list-item>
-                            - Right click 'hides' a section
-                        </md-list-item>
-                    </md-list>
-                </md-list-item>
-            </md-list> -->
         </md-card-area>
     </md-card>
 </template>

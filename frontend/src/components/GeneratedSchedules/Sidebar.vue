@@ -42,6 +42,8 @@ import { mapGetters } from 'vuex';
 import GeneratorInput from './generator-input';
 import GeneratorSave from './generator-save';
 
+import * as keyboard from '@/workers/keyboard';
+
 export default {
     name: 'generated-schedules-sidebar',
 
@@ -63,25 +65,19 @@ export default {
     },
 
     created() {
-        window.addEventListener('keydown', this.onKeyDown);
-    },
+        this.$use(keyboard.onPress(keyboard.LEFT_ARROW, () => {
+            this.nav(-1);
+        }));
 
-    destroyed() {
-        window.removeEventListener('keydown', this.onKeyDown);
+        this.$use(keyboard.onPress(keyboard.RIGHT_ARROW, () => {
+            this.nav(1);
+        }));
     },
 
     methods: {
         nav(offset) {
             let index = this.index + offset;
             this.$store.dispatch('generator/setIndex', index);
-        },
-
-        onKeyDown(e) {
-            if (e.keyCode == 37) {
-                this.nav(-1);
-            } else if (e.keyCode == 39) {
-                this.nav(+1);
-            }
         },
     },
 };

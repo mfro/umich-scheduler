@@ -1,5 +1,7 @@
 <template>
-    <div class="section" :class="classes" :style="style" @mouseup="onClick" @contextmenu.prevent="onContextMenu">
+    <div class="section" :class="classes" :style="style"
+        @mouseenter="hover = true" @mouseleave="hover = false"
+        @mouseup="onClick" @contextmenu.prevent="onContextMenu">
         <div class="sideline" :style="sidelineStyle"/>
 
         <div class="content">
@@ -33,6 +35,8 @@
 <script lang="js">
 import { mapGetters } from 'vuex';
 
+import * as keyboard from '@/workers/keyboard';
+
 export default {
     name: 'calendar-section',
 
@@ -40,6 +44,12 @@ export default {
         block: Object,
         group: Object,
         interactive: Boolean,
+    },
+
+    data() {
+        return {
+            hover: false,
+        };
     },
 
     computed: {
@@ -106,6 +116,12 @@ export default {
         },
     },
 
+    created() {
+        this.$use(keyboard.onPress(keyboard.Q, () => this.hover && this.lock()));
+        this.$use(keyboard.onPress(keyboard.W, () => this.hover && this.preview()));
+        this.$use(keyboard.onPress(keyboard.E, () => this.hover && this.hide()));
+    },
+
     mounted() {
         this.$el.onmousedown = (e) => {
             if (e.button == 1) {
@@ -116,19 +132,31 @@ export default {
     },
 
     methods: {
+        lock() {
+            this.$emit('lock', this.block);
+        },
+
+        preview() {
+            this.$emit('preview', this.block);
+        },
+
+        hide() {
+            this.$emit('hide', this.block);
+        },
+
         onContextMenu(e) {
             if (!this.interactive) return;
 
-            this.$emit('hide', this.block);
+            this.hide();
         },
 
         onClick(e) {
             if (e.button == 0) {
                 if (!this.interactive) return;
 
-                this.$emit('lock', this.block);
+                this.lock();
             } else if (e.button == 1) {
-                this.$emit('preview', this.block);
+                this.preview();
             }
         },
     },
