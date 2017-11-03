@@ -6,7 +6,10 @@ class Course {
     private constructor(
         readonly subject: string,
         readonly id: number
-    ) { }
+    ) {
+        let other = courses.get(subject + id);
+        if (other && other != this) throw new Error('Duplicated sections');
+    }
 
     isSection(section: Section) {
         return section.getCourse() == this;
@@ -33,10 +36,18 @@ class Course {
     }
 
     static parse(id: string) {
-        let match = /([A-Za-z]+)\s*(\d+)/.exec(id);
-        if (!match) throw new Error('Invalid id: ' + id);
+        let course = Course.tryParse(id);
+        if (course == null)
+            throw new Error('Invalid id: ' + id);
+        
+        return course;
+    }
 
-        let subj = match[1];
+    static tryParse(id: string) {
+        let match = /([A-Za-z]+)\s*(\d+)/.exec(id);
+        if (!match) return null;
+
+        let subj = match[1].toUpperCase();
         let course = parseInt(match[2]);
 
         return Course.get(subj, course);

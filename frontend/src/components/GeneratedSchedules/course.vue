@@ -1,8 +1,12 @@
 <template>
-    <div class="course" @click="toggle()">
-        <md-checkbox class="checkbox" v-model="course.enabled"/>
+    <md-list-item @click="toggle()">
+        <md-checkbox class="checkbox" :value="course.enabled"/>
         <span class="id">{{ course.course.toString() }}</span>
-    </div>
+    </md-list-item>
+    <!-- <div class="course" @click="toggle()">
+        <md-checkbox class="checkbox" :value="course.enabled"/>
+        <span class="id">{{ course.course.toString() }}</span>
+    </div> -->
 </template>
 
 <script>
@@ -34,10 +38,8 @@ export default {
     pointer-events: none;
 }
 
-input {
-    width: 1.4em;
-    height: 1.4em;
-    margin: 3px 8px 4px 8px;
+.id {
+    flex: 1 1;
 }
 </style>
 

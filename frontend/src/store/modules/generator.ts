@@ -23,16 +23,24 @@ interface State {
     courses: { course: Course, enabled: boolean }[];
 
     generated: {
-        current: number;
-        all: Block[][];
+        loading: boolean;
+
+        total: number;
+        occurences: { [id: number]: number };
+
+        index: number;
+        current: Block[] | null;
     };
 }
 
 interface Getters {
-    current: Block[];
+    current: Block[] | null;
+    isLoading: boolean;
+
+    total: number;
     currentIndex: number;
 
-    all: Block[][];
+    getOccurences(section: Section): number;
 
     hidden: Section[];
     locked: Section[];
@@ -42,8 +50,11 @@ interface Getters {
 
 interface Mutations {
     SET_INDEX: number;
+    SET_CURRENT: Block[] | null,
+    SET_LOADING: boolean;
 
     ADD_COURSE: Course;
+    REMOVE_COURSE: Course;
 
     ADD_LOCKED_SECTION: number;
     ADD_HIDDEN_SECTION: number;
@@ -51,7 +62,8 @@ interface Mutations {
     REMOVE_HIDDEN_SECTION: number;
 
     RESET_GENERATED: never;
-    ADD_GENERATED: Block[][];
+    SET_GENERATED_TOTAL: number;
+    SET_GENERATED_OCCURENCES: { [id: number]: number };
 
     TOGGLE_ENABLED: Course;
 
@@ -60,17 +72,23 @@ interface Mutations {
 
 interface Actions {
     reset: never;
+    setIndex: number;
 
     generate: never;
-    addCourse: Course;
+    toggleCourse: Course;
+
     lockSection: Section;
     hideSection: Section;
 }
 
 export const state: State = {
     generated: {
-        current: 0,
-        all: [],
+        loading: false,
+
+        total: 0,
+        index: 0,
+        current: null,
+        occurences: {},
     },
     lockedSections: [],
     hiddenSections: [],
@@ -78,16 +96,25 @@ export const state: State = {
 };
 
 export const getters: Vuex.Getters<State, Getters> = {
-    current(state, getters) {
-        return state.generated.all[getters.currentIndex];
-    },
-
-    currentIndex(state) {
+    current(state, getters, rootState, rootGetters) {
         return state.generated.current;
     },
 
-    all(state) {
-        return state.generated.all;
+    currentIndex(state) {
+        return state.generated.index;
+    },
+
+    total(state) {
+        return state.generated.total;
+    },
+
+    isLoading(state) {
+        return state.generated.loading;
+    },
+
+    getOccurences: (state, getters) => (section) => {
+        let num = state.generated.occurences[section.id];
+        return num || 0;
     },
 
     hidden(state, getters, rootState, rootGetters) {
@@ -111,62 +138,88 @@ export const mutations: Vuex.Mutations<State, Mutations> = {
     },
 
     SET_INDEX(state, index) {
-        if (state.generated.all.length == 0) {
-            state.generated.current = 0;
-            return;
+        if (state.generated.total == 0) {
+            state.generated.index = 0;
+        } else {
+            state.generated.index = index % state.generated.total;
+            while (state.generated.index < 0)
+                state.generated.index += state.generated.total;
         }
+    },
 
-        state.generated.current = index % state.generated.all.length;
-        while (state.generated.current < 0)
-            state.generated.current += state.generated.all.length;
+    SET_CURRENT(state, value) {
+        state.generated.current = value;
+    },
+
+    SET_LOADING(state, value) {
+        state.generated.loading = value;
     },
 
     ADD_COURSE(state, course) {
+        let old = state.courses.findIndex(c => c.course == course);
+        if (old != -1)
+            throw new Error('Adding already added course');
+
         state.courses.push({
             course: course,
             enabled: true,
         });
     },
 
+    REMOVE_COURSE(state, course) {
+        let old = state.courses.findIndex(c => c.course == course);
+        if (old == -1)
+            throw new Error('Removing not added course');
+
+        state.courses.splice(old, 1);
+    },
+
     ADD_LOCKED_SECTION(state, id) {
         let old = state.lockedSections.indexOf(id);
         if (old != -1)
             throw new Error('Adding already locked section');
-        else
-            state.lockedSections.push(id);
+
+        state.lockedSections.push(id);
     },
 
     ADD_HIDDEN_SECTION(state, id) {
         let old = state.hiddenSections.indexOf(id);
         if (old != -1)
             throw new Error('Adding already hidden section');
-        else
-            state.hiddenSections.push(id);
+
+        state.hiddenSections.push(id);
     },
 
     REMOVE_LOCKED_SECTION(state, id) {
         let old = state.lockedSections.indexOf(id);
-        if (old != -1)
-            state.lockedSections.splice(old, 1);
-        else
+        if (old == -1)
             throw new Error('Removing not locked section');
+
+        state.lockedSections.splice(old, 1);
     },
 
     REMOVE_HIDDEN_SECTION(state, id) {
         let old = state.hiddenSections.indexOf(id);
-        if (old != -1)
-            state.hiddenSections.splice(old, 1);
-        else
+        if (old == -1)
             throw new Error('Removing not hidden section');
+
+        state.hiddenSections.splice(old, 1);
     },
 
     RESET_GENERATED(state, args) {
-        state.generated.current = 0;
-        state.generated.all = [];
+        state.generated.index = 0;
+        state.generated.total = 0;
+        state.generated.current = null;
+        state.generated.occurences = {};
+        state.generated.loading = false;
     },
 
-    ADD_GENERATED(state, args) {
-        state.generated.all.push(...args);
+    SET_GENERATED_TOTAL(state, total) {
+        state.generated.total = total;
+    },
+
+    SET_GENERATED_OCCURENCES(state, occurences) {
+        state.generated.occurences = occurences;
     },
 
     TOGGLE_ENABLED(state, course) {
@@ -184,14 +237,18 @@ export const actions: Vuex.Actions<State, Getters, Mutations, Actions> = {
     },
 
     generate(context) {
-        let oldCount = context.getters.all.length;
-
         context.commit('RESET_GENERATED');
+        context.commit('SET_LOADING', true);
 
         let courses = context.getters.courses.filter(c => c.enabled);
         let mapped = courses.map(c => {
             return context.rootGetters['courses/byCourse'](c.course);
         });
+
+        if (courses.length == 0) {
+            context.commit('SET_LOADING', false);
+            return;
+        }
 
         let request = {
             courses: mapped,
@@ -200,23 +257,38 @@ export const actions: Vuex.Actions<State, Getters, Mutations, Actions> = {
         };
 
         return generator.generate(request).then(raw => {
-            let list = raw.map(l => l.map(b => {
-                let section = context.rootGetters['courses/byId'](b.id);
-                return new Block.GeneratedCourse(b.color, section, b.locked);
-            }));
+            context.commit('SET_GENERATED_TOTAL', raw.count);
+            context.commit('SET_GENERATED_OCCURENCES', raw.occurences);
 
-            context.commit('ADD_GENERATED', list);
-
-            if (oldCount != list.length) {
-                context.commit('SET_INDEX', 0);
-            }
+            if (context.getters.current == null)
+                context.dispatch('setIndex', 0);
+            context.commit('SET_LOADING', false);
         });
     },
 
-    addCourse({ commit, dispatch }, course) {
-        return dispatch('courses/load', course, { root: true }).then(() => {
-            commit('ADD_COURSE', course);
+    setIndex({ commit, state, getters, rootGetters }, number) {
+        commit('SET_INDEX', number);
+
+        const request = {
+            index: getters.currentIndex,
+        };
+
+        return generator.get(request).each(b => {
+            let section = rootGetters['courses/byId'](b.id);
+            return new Block.GeneratedCourse(b.color, section, b.locked);
+        }).then(blocks => {
+            commit('SET_CURRENT', blocks);
         });
+    },
+
+    toggleCourse({ commit, dispatch, getters }, course) {
+        let old = getters.courses.find(c => c.course == course);
+        if (old != null) {
+            commit('REMOVE_COURSE', old.course);
+            return;
+        }
+
+        commit('ADD_COURSE', course);
     },
 
     lockSection({ commit, dispatch, getters }, section) {
@@ -226,9 +298,12 @@ export const actions: Vuex.Actions<State, Getters, Mutations, Actions> = {
             commit('REMOVE_LOCKED_SECTION', old.id);
         else {
             let toRemove = getters.locked.filter(s => !s.isCompatible(section));
-
             for (let s of toRemove)
                 commit('REMOVE_LOCKED_SECTION', s.id);
+
+            let isHidden = getters.hidden.find(s => s.id == section.id);
+            if (isHidden)
+                commit('REMOVE_HIDDEN_SECTION', section.id);
 
             commit('ADD_LOCKED_SECTION', section.id);
         }
@@ -239,7 +314,12 @@ export const actions: Vuex.Actions<State, Getters, Mutations, Actions> = {
 
         if (old != null)
             commit('REMOVE_HIDDEN_SECTION', old.id);
-        else
+        else {
+            let isLocked = getters.locked.find(s => s.id == section.id);
+            if (isLocked)
+                commit('REMOVE_LOCKED_SECTION', section.id);
+
             commit('ADD_HIDDEN_SECTION', section.id);
+        }
     },
 };

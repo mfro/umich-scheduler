@@ -22,7 +22,7 @@
                     </div>
 
                     <div class="occurences">
-                        <span v-if="block.isPreview">{{ block.occurences }}</span>
+                        <span v-if="interactive && block.isPreview">{{ block.occurences }}</span>
                     </div>
                 </div>
             </div>
@@ -64,14 +64,15 @@ export default {
         },
 
         style() {
-            let top = (this.block.start - this.dayStart) / (this.dayEnd - this.dayStart);
-            let bot = (this.block.end - this.dayStart) / (this.dayEnd - this.dayStart);
-            let height = bot - top;
+            let length = this.block.end - this.block.start;
+
+            let height = length / (this.dayEnd - this.dayStart);
+            let translate = (this.block.start - this.dayStart) / length;
 
             return {
                 width: `calc(100% - ${8 * (this.group.size - 1)}px)`,
-                height: 100 * height + 'vh',
-                marginTop: 100 * top + 'vh',
+                height: `${100 * height}%`,
+                transform: `translateY(${100 * translate}%)`,
                 marginLeft: `${8 * this.group.index}px`,
             };
         },
@@ -85,7 +86,7 @@ export default {
         },
 
         color() {
-            if (this.block.isPreview && this.block.occurences == 0) {
+            if (this.interactive && this.block.isPreview && this.block.occurences == 0) {
                 return 'gray';
             }
 

@@ -2,6 +2,7 @@
     "compilerOptions": {
         "target": "es2015",
         "module": "commonjs",
+        "moduleResolution": "node",
 
         "allowSyntheticDefaultImports": true,
         
@@ -9,9 +10,18 @@
         "noImplicitAny": true,
         "noImplicitThis": true,
         "strictNullChecks": true,
+        "strictFunctionTypes": true,
 
-        "outDir": "dist",
-        "sourceMap": true
+        "declaration": true,
+        "declarationDir": ".",
+
+        "baseUrl": ".",
+        "paths": {
+            "@/*": [
+                "src/*",
+                "../*"
+            ]
+        }
     },
     
     "exclude": [

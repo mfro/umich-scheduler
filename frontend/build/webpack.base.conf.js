@@ -17,6 +17,7 @@ const includes = [
 const babelLoader = {
   loader: 'babel-loader',
   options: {
+    babelrc: false,
     presets: [
       require.resolve('babel-preset-es2015'),
     ],
@@ -26,9 +27,10 @@ const babelLoader = {
   },
 };
 
+
 module.exports = {
   entry: {
-    app: './src/main'
+    'app': resolve('src/main.ts')
   },
   output: {
     path: config.build.assetsRoot,
@@ -40,6 +42,7 @@ module.exports = {
   resolve: {
     extensions: ['.js', '.ts', '.vue', '.json'],
     alias: {
+      '@/frontend-generator': resolve('../frontend-generator'),
       '@/common': resolve('../common'),
       '@': resolve('src')
     }

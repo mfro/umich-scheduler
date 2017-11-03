@@ -1,6 +1,6 @@
 <template>
     <div class="day">
-        <calendar-section v-for="a in sorted" :key="a.block.section.id" :block="a.block" :group="a.group" :interactive="interactive"
+        <calendar-section v-for="a in sorted" :key="a.block.id" :block="a.block" :group="a.group" :interactive="interactive"
             @hide="onHide" @lock="onLock" @preview="onPreview"/>
     </div>
 </template>

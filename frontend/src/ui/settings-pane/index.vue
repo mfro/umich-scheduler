@@ -1,20 +1,22 @@
 <template>
     <div class="settings">
-        <uikit-toolbox>
-            <span slot="header">Settings</span>
+        <md-card class="calendar">
+            <md-toolbar class="md-dense md-transparent">
+                <div class="md-title">Calendar Settings</div>
+            </md-toolbar>
 
-            <div class="contents">
-                <div class="setting">
-                    <span>Day start:</span>
-                    <input type="number" :value="dayStart" @input="setDayStart(+$event.target.value)"/>
-                </div>
+            <md-card-content>
+                <md-input-container>
+                    <label>Day start</label>
+                    <md-input type="number" :value="dayStart" @input="setDayStart(+$event)"/>
+                </md-input-container>
                 
-                <div class="setting">
-                    <span>Day end:</span>
-                    <input type="number" :value="dayEnd" @input="setDayEnd(+$event.target.value)"/>
-                </div>
-            </div>
-        </uikit-toolbox>
+                <md-input-container>
+                    <label>Day end</label>
+                    <md-input type="number" :value="dayEnd" @input="setDayEnd(+$event)"/>
+                </md-input-container>
+            </md-card-content>
+        </md-card>
     </div>
 </template>
 
@@ -40,26 +42,7 @@ export default {
 </script>
 
 <style lang="less" scoped>
-.settings {
-    display: flex;
-    flex-direction: column;
-}
-
-.contents {
-    padding: 0 7px 8px 7px;
-}
-
-.setting {
-    display: flex;
-    flex-direction: column;
-    margin-top: 8px;
-
-    span {
-        margin-bottom: 6px;
-    }
-
-    input {
-        font-size: inherit;
-    }
+.calendar {
+    margin-top: 16px;
 }
 </style>

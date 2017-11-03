@@ -1,6 +1,6 @@
 <template>
     <div class="schedule-view-sidebar">
-        <md-card class="options">
+        <md-card class="options" v-if="schedule">
             <md-toolbar class="md-dense md-transparent">
                 <div class="md-title">Schedule options</div>
             </md-toolbar>
@@ -8,7 +8,7 @@
             <md-card-content>
                 <md-input-container>
                     <label>Name</label>
-                    <md-input v-model="schedule.name" @input="setName($event.target.value)"/>
+                    <md-input :value="schedule.name" @input="setName($event)"/>
                 </md-input-container>
             </md-card-content>
 
@@ -42,23 +42,30 @@ export default {
             this.$store.commit('schedules/delete', this.schedule.id);
         },
 
-        async modify() {
-            await this.$store.dispatch('generator/reset');
-
+        modify() {
             let done = new Set();
-            for (let block of this.schedule.blocks) {
+
+            this.$store.dispatch('generator/reset').then(() => {
+                return this.schedule.blocks;
+            }).each((block) => {
                 let course = block.section.getCourse();
 
+                let first;
                 if (!done.has(course)) {
                     done.add(course);
-                    await this.$store.dispatch('generator/addCourse', course);
+                    first = this.$store.dispatch('generator/toggleCourse', course);
+                } else {
+                    first = Promise.resolve();
                 }
 
-                await this.$store.dispatch('generator/lockSection', block.section);
-            }
-
-            await this.$store.dispatch('generator/generate');
-            this.$router.push('/');
+                return first.then(() => {
+                    return this.$store.dispatch('generator/lockSection', block.section);
+                });
+            }).then(() => {
+                return this.$store.dispatch('generator/generate');
+            }).then(() => {
+                this.$router.push('/');
+            });
         },
 
         setName(name) {
@@ -73,40 +80,6 @@ export default {
 
 <style lang="less" scoped>
 .options {
-    margin: 16px;
-}
-
-.schedule-view-sidebar {
-    display: flex;
-    flex-direction: column;
-}
-
-.back {
-    margin: 20px 10px 10px 10px;
-    cursor: pointer;
-    text-decoration: none;
-    color: inherit;
-}
-
-.contents {
-    padding-bottom: 6px;
-}
-
-.option {
-    display: flex;
-    flex-direction: column;
-    margin: 8px 6px 0 6px;
-
-    span {
-        margin-bottom: 6px;
-    }
-
-    input {
-        font-size: inherit;
-    }
-}
-
-.button {
-    margin: 8px 0 0 6px;
+    margin-top: 16px;
 }
 </style>

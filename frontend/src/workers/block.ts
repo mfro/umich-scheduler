@@ -8,6 +8,7 @@ abstract class Base {
     public days: string[];
     public start: number;
     public end: number;
+    public id: string | number;
 
     constructor(
         public color = 'black',
@@ -51,6 +52,7 @@ namespace Base {
                 this.days = section.days;
                 this.start = time.start;
                 this.end = time.end;
+                this.id = section.id;
             }
         }
 

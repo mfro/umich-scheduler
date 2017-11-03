@@ -69,6 +69,9 @@ class Section {
             this.instructor = parts.instructor;
             this.credits = parts.credits;
         }
+
+        let other = sections.get(this.id);
+        if (other && other != this) throw new Error('Duplicated sections');
     }
 
     getTime() {

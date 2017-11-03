@@ -35,48 +35,13 @@ export function courses(cb: (store: Vuex.Store<any>) => Course[]) {
 
 export default function init(store: Vuex.Store<any>) {
     store.subscribe((mut, state) => {
-        save2(store);
+        save(store);
     });
 
-    // console.log(load, save);
-
-    load2(store).catch(console.error);
+    load(store).catch(console.error);
 }
 
-// function load(store: Vuex.Store<any>) {
-//     let save: SaveFile;
-
-//     try {
-//         let raw = localStorage.getItem(save_key);
-//         if (!raw) return Promise.resolve();
-//         save = json.deserialize(store, raw);
-//     } catch (e) {
-//         return Promise.resolve();
-//     }
-
-//     return Promise.each(save.courses, src => {
-//         return store.dispatch('generator/addCourse', { id: src.id }).then(() => {
-//             let course = (<Course[]>store.getters['generator/courses']).find(c => c.id == src.id);
-//             store.commit('generator/setEnabled', { course, enabled: src.enabled });
-//         })
-//     }).then(() => {
-//         let locked = Promise.each(save.locked, id => {
-//             let section = store.getters['courses/byId'](id);
-//             return store.dispatch('generator/lockSection', section);
-//         });
-
-//         let hidden = Promise.each(save.hidden, id => {
-//             let section = store.getters['courses/byId'](id);
-//             return store.dispatch('generator/hideSection', section);
-//         });
-
-//         return Promise.all([locked, hidden]).then(() => {
-//             store.dispatch('generator/generate');
-//         });
-//     });
-// }
-
-function load2(store: Vuex.Store<any>) {
+function load(store: Vuex.Store<any>) {
     let courses: string[];
 
     try {
@@ -128,7 +93,7 @@ function load2(store: Vuex.Store<any>) {
     });
 }
 
-function save2(store: Vuex.Store<any>) {
+function save(store: Vuex.Store<any>) {
     if (is_loading) return;
 
     let courses = new Array<string>();
@@ -175,25 +140,3 @@ function save2(store: Vuex.Store<any>) {
         localStorage.setItem(save_key2, json.serialize(save));
     } catch (e) { }
 }
-
-// function save(store: Vuex.Store<any>) {
-//     const contents: SaveFile = {
-//         hidden: [],
-//         locked: [],
-//         courses: [],
-//     };
-
-//     for (let section of store.state.generator.hidden as number[])
-//         contents.hidden.push(section);
-
-//     for (let section of store.state.generator.locked as number[])
-//         contents.locked.push(section);
-
-//     for (let course of store.getters['generator/courses'] as Course[])
-//         contents.courses.push({
-//             id: course.id,
-//             enabled: course.enabled,
-//         });
-
-//     localStorage.setItem(save_key, json.serialize(contents));
-// }

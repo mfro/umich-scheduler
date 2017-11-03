@@ -1,28 +1,35 @@
 <template>
-    <uikit-toolbox>
-        <span slot="header">View schedules</span>
+    <md-card class="schedule-nav">
+        <md-toolbar class="md-dense md-transparent">
+            <div class="md-title">View schedules</div>
+        </md-toolbar>
 
-        <saved-schedule/>
+        <md-card-area class="contents">
+            <md-list>
+                <md-list-item class="schedule">
+                    <router-link to="/schedules/generated">
+                        <span>Generated</span>
+                    </router-link>
+                </md-list-item>
 
-        <saved-schedule v-for="(schedule, i) in saved" :key="i" :schedule="schedule"/>
-    </uikit-toolbox>
+                <md-list-item v-for="schedule in saved" :key="schedule.id" class="schedule">
+                    <router-link :to="'/schedules/' + schedule.id">
+                        <span>{{ schedule.name }}</span>
+                    </router-link>
+                </md-list-item>
+            </md-list>
+        </md-card-area>
+    </md-card>
 </template>
 
 <script>
 import { mapGetters } from 'vuex';
 
-import SavedSchedule from './schedule.vue';
-
 export default {
     name: 'schedules-nav',
 
-    components: {
-        SavedSchedule,
-    },
-
     computed: {
         ...mapGetters({
-            // current: 'generator/current',
             saved: 'schedules/saved',
         }),
     },
@@ -30,26 +37,12 @@ export default {
 </script>
 
 <style lang="less" scoped>
-.schedules-nav {
-    display: flex;
-    flex-direction: column;
-    margin: 8px;
-
-    border: 1px solid lightgray;
+.schedule-nav {
+    margin-top: 16px;
 }
 
-.link {
-    margin-left: 6px;
-
-    display: block;
-    cursor: pointer;
-    padding: 5px 0;
-    margin-top: 5px;
-    display: flex;
-    align-items: center;
-
-    color: inherit;
-    text-decoration: none;
+.schedule .router-link-active {
+    background-color: #efefef;
 }
 </style>
 

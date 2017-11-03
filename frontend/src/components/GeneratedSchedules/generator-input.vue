@@ -1,19 +1,25 @@
 <template>
-    <div class="generator-input">
-        <div class="course-list">
+    <div>
+        <md-list class="list">
             <schedule-course v-for="course in courses" :key="course.id" :course="course"/>
-        </div>
+        </md-list>
 
         <div class="row">
             <md-input-container>
                 <label>Course ID</label>
-                <md-input v-model="courseInput"/>
+                <md-input v-model="rawInput"/>
             </md-input-container>
 
-            <md-button class="md-icon-button" :disabled="!courseInput" @click="submit()">
+            <md-button class="md-icon-button" :disabled="!course" @click="submit()">
                 <md-icon>add</md-icon>
             </md-button>
         </div>
+
+        <md-card-actions class="actions">
+            <md-button class="reset-button" @click="reset()">
+                Reset
+            </md-button>
+        </md-card-actions>
     </div>
 </template>
 
@@ -32,7 +38,7 @@ export default {
 
     data() {
         return {
-            courseInput: '',
+            rawInput: '',
         };
     },
 
@@ -40,16 +46,21 @@ export default {
         ...mapGetters({
             courses: 'generator/courses',
         }),
+
+        course() {
+            return Course.tryParse(this.rawInput);
+        },
     },
 
     methods: {
         submit() {
-            let id = this.courseInput;
-            let course = Course.parse(id);
+            if (!this.course) return;
 
-            this.$store.dispatch('generator/addCourse', course).then(() => {
-                this.courseInput = '';
-                this.$store.dispatch('generator/generate');
+            this.$store.dispatch('courses/load', this.course, { root: true }).then(() => {
+                return this.$store.dispatch('generator/toggleCourse', this.course).then(() => {
+                    this.courseInput = '';
+                    return this.$store.dispatch('generator/generate');
+                });
             });
         },
 
@@ -61,17 +72,19 @@ export default {
 </script>
 
 <style lang="less" scoped>
-.generator-input {
-    display: flex;
-    flex-direction: column;
+.list {
+    margin: 0 -16px;
 }
 
 .row {
     margin-top: -8px;
-    margin-bottom: -22px;
 
     display: flex;
     align-items: center;
+}
+
+.actions {
+    margin: -16px;
 }
 </style>
 

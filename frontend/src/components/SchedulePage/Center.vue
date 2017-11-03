@@ -45,11 +45,13 @@ export default {
 
 <style lang="less" scoped>
 .schedule-page {
+    height: 100%;
     display: flex;
     flex-direction: column;
 }
 
 .calendar-container {
+    flex: 1;
     display: flex;
     justify-content: center;
 }

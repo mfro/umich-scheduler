@@ -1,0 +1,21 @@
+{
+    "name": "@mfro/umich-scheduler-frontend-generator",
+    "description": "WebWorker schedule generator for my umich scheduler app",
+    "author": "mfro",
+    "version": "1.0.0",
+    "devDependencies": {
+        "webpack": "^3.8.1",
+        "typescript": "^2.6.1",
+        "ts-loader": "^3.1.1",
+        "babel-core": "^6.22.1",
+        "babel-preset-es2015": "^6.24.1",
+        "babel-plugin-transform-object-rest-spread": "^6.26.0",
+        "babel-loader": "^7.1.1"
+    },
+    "scripts": {
+        "build": "webpack -p",
+        "watch": "webpack --watch"
+    },
+    "main": "./dist/bundle.js",
+    "types": "./dist/frontend-generator/src/main.d.ts"
+}

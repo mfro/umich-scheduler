@@ -113,12 +113,11 @@ export default {
                     c.component == target.section.component &&
                     c.flags.includes(flag);
             });
-            let generated = this.$store.getters['generator/all'];
+            let getOccurences = this.$store.getters['generator/getOccurences'];
 
             let previewing = sections.map((s) => {
                 let isHidden = hidden.find((s2) => s2.id == s.id) != null;
-                let occurences = generated.filter(
-                    (list) => list.find((b) => b.section == s)).length;
+                let occurences = getOccurences(s);
 
                 return new Block.PreviewCourse(target.color, s, isHidden, occurences);
             });
@@ -171,6 +170,7 @@ export default {
 
 <style lang="less" scoped>
 .schedule-view {
+    height: 100%;
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -198,8 +198,9 @@ export default {
 }
 
 .body {
-    flex: 0 0 100vh;
+    flex: 1;
     display: flex;
+    overflow: hidden;
 }
 
 .sidebar {
@@ -210,6 +211,7 @@ export default {
 
 .time {
     text-align: right;
+    flex: 1 1 !important;
 }
 
 .calendar {
@@ -222,10 +224,15 @@ export default {
     position: absolute;
     width: 100%;
     height: 100%;
+    display: flex;
+    flex-direction: column;
 
     .line {
-        background: lightgray;
-        height: 1px;
+        flex: 1 1 !important;
+        margin: 0 !important;
+        border-top: 1px solid lightgray;
+        // background: lightgray;
+        // height: 1px;
     }
 }
 </style>
