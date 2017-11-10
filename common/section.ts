@@ -25,6 +25,10 @@ class Section {
     readonly instructor: string;
     readonly credits: string;
 
+    readonly totalSeats: number;
+    readonly remainingSeats: number;
+    readonly hasWaitlist: boolean;
+
     private constructor(parts: any | string[]) {
         if (parts instanceof Array) {
             this.term = parts[0];
@@ -46,7 +50,17 @@ class Section {
             this.time = parts[19];
             this.location = parts[20];
             this.instructor = parts[21];
-            this.credits = parts[22];
+
+            if (parts.length == 23) {
+                this.credits = parts[22];
+            } else if (parts.length == 26) {
+                this.totalSeats = parseInt(parts[22]);
+                this.remainingSeats = parseInt(parts[23]);
+                this.hasWaitlist = parts[24] == "Y";
+                this.credits = parts[25];
+            } else  {
+                console.warn(`Parsing with ${parts.length} columns`);
+            }
         } else {
             this.term = parts.time;
             this.session = parts.session;
@@ -68,6 +82,10 @@ class Section {
             this.location = parts.location;
             this.instructor = parts.instructor;
             this.credits = parts.credits;
+
+            this.totalSeats = parts.totalSeats;
+            this.remainingSeats = parts.remainingSeats;
+            this.hasWaitlist = parts.hasWaitlist;
         }
 
         let other = sections.get(this.id);

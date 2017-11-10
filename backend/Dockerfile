@@ -6,13 +6,13 @@ ADD . /app
 
 WORKDIR /app/backend
 
-RUN npm i
+RUN npm install
 RUN npm run build
 
 ENV NODE_ENV production
 
 RUN npm prune
-RUN npm i
+RUN npm install
 
 EXPOSE 8081
 
