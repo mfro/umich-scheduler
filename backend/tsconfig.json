@@ -4,12 +4,7 @@
         "module": "commonjs",
         "moduleResolution": "node",
 
-        "allowSyntheticDefaultImports": true,
-        
-        "alwaysStrict": true,
-        "noImplicitAny": true,
-        "noImplicitThis": true,
-        "strictNullChecks": true,
+        "strict": true,
         "strictFunctionTypes": true,
 
         "outDir": "dist"
@@ -21,6 +16,7 @@
 
     "include": [
         "./declare/**/*.d.ts",
-        "./src/**/*.ts"
+        "./src/**/*.ts",
+        "./test/**/*.ts"
     ]
 }

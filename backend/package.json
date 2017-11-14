@@ -18,5 +18,5 @@
         "build": "tsc",
         "watch": "tsc --watch"
     },
-    "main": "dist/backend/src/index.js"
+    "main": "dist/backend/src/main.js"
 }
