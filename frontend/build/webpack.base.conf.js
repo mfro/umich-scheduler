@@ -4,33 +4,25 @@ const utils = require('./utils')
 const config = require('../config')
 const vueLoaderConfig = require('./vue-loader.conf')
 
-function resolve(dir) {
+function resolve (dir) {
   return path.join(__dirname, '..', dir)
 }
 
-const includes = [
-  resolve('src'),
-  resolve('test'),
-  resolve('../common'),
-];
-
-const babelLoader = {
-  loader: 'babel-loader',
+const createLintingRule = () => ({
+  test: /\.(js|vue)$/,
+  loader: 'eslint-loader',
+  enforce: 'pre',
+  include: [resolve('src'), resolve('test')],
   options: {
-    babelrc: false,
-    presets: [
-      require.resolve('babel-preset-es2015'),
-    ],
-    plugins: [
-      require.resolve('babel-plugin-transform-object-rest-spread'),
-    ],
-  },
-};
-
+    formatter: require('eslint-friendly-formatter'),
+    emitWarning: !config.dev.showEslintErrorsInOverlay
+  }
+})
 
 module.exports = {
+  context: path.resolve(__dirname, '../'),
   entry: {
-    'app': resolve('src/main.ts')
+    app: './src/main'
   },
   output: {
     path: config.build.assetsRoot,
@@ -42,22 +34,12 @@ module.exports = {
   resolve: {
     extensions: ['.js', '.ts', '.vue', '.json'],
     alias: {
-      '@/frontend-generator': resolve('../frontend-generator'),
-      '@/common': resolve('../common'),
-      '@': resolve('src')
+      '@': resolve('src'),
     }
   },
   module: {
     rules: [
-      {
-        test: /\.(js|vue)$/,
-        loader: 'eslint-loader',
-        enforce: 'pre',
-        include: includes,
-        options: {
-          formatter: require('eslint-friendly-formatter')
-        }
-      },
+      ...(config.dev.useEslint ? [createLintingRule()] : []),
       {
         test: /\.vue$/,
         loader: 'vue-loader',
@@ -65,29 +47,17 @@ module.exports = {
       },
       {
         test: /\.js$/,
-        include: includes,
-        use: babelLoader,
+        loader: 'babel-loader',
+        include: [resolve('src'), resolve('test')]
       },
       {
         test: /\.ts$/,
-        include: includes,
         use: [
-          babelLoader,
+          'babel-loader',
           {
             loader: 'ts-loader',
             options: { logLevel: 'warn' }
           }
-        ],
-      },
-      {
-        test: /\.less$/,
-        use: [
-          'style-loader',
-          'css-loader',
-          {
-            loader: 'less-loader',
-            options: { strictMath: 'on' },
-          },
         ],
       },
       {
@@ -115,5 +85,17 @@ module.exports = {
         }
       }
     ]
+  },
+  node: {
+    // prevent webpack from injecting useless setImmediate polyfill because Vue
+    // source contains it (although only uses it if it's native).
+    setImmediate: false,
+    // prevent webpack from injecting mocks to Node native modules
+    // that does not make sense for the client
+    dgram: 'empty',
+    fs: 'empty',
+    net: 'empty',
+    tls: 'empty',
+    child_process: 'empty'
   }
 }

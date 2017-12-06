@@ -5,8 +5,8 @@ import * as save from '@/store/plugins/save';
 import Block from '@/workers/block.ts';
 import * as generator from '@/workers/schedule-generator.ts';
 
-import Course from '@/common/course';
-import Section from '@/common/section';
+import Course from '@mfro/umich-scheduler-common/course';
+import Section from '@mfro/umich-scheduler-common/section';
 
 export const namespaced = true;
 
@@ -273,17 +273,27 @@ export const actions: Vuex.Actions<State, Getters, Mutations, Actions> = {
             index: getters.currentIndex,
         };
 
-        return generator.get(request).each(b => {
-            let section = rootGetters['courses/byId'](b.id);
-            return new Block.GeneratedCourse(b.color, section, b.locked);
+        return generator.get(request).each(s => {
+            let section: Section = rootGetters['courses/byId'](s.id);
+            let blocks = section.blocks.filter(b => b.startDate != b.endDate);
+
+            return blocks.map(b => new Block.GeneratedCourse(s.color, section, b, s.locked));
         }).then(blocks => {
-            commit('SET_CURRENT', blocks);
+            let all = (<Block.GeneratedCourse[]>[]).concat(...blocks);
+            commit('SET_CURRENT', all);
         });
     },
 
-    toggleCourse({ commit, dispatch, getters }, course) {
+    toggleCourse({ commit, dispatch, getters, rootGetters }, course) {
         let old = getters.courses.find(c => c.course == course);
         if (old != null) {
+            for (let section of rootGetters['courses/byCourse'](course)) {
+                let isHidden = getters.hidden.find(s => s.id == section.id);
+                let isLocked = getters.locked.find(s => s.id == section.id);
+                if (isHidden) commit('REMOVE_HIDDEN_SECTION', section.id);
+                if (isLocked) commit('REMOVE_LOCKED_SECTION', section.id);
+            }
+
             commit('REMOVE_COURSE', old.course);
             return;
         }

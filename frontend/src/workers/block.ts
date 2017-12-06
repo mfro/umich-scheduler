@@ -1,6 +1,6 @@
 import * as Vuex from 'vuex';
 
-import Section from '@/common/section';
+import Section from '@mfro/umich-scheduler-common/section';
 
 abstract class Base {
     public type: string;
@@ -40,16 +40,18 @@ namespace Base {
         readonly isCourse = true;
 
         readonly section: Section;
+        readonly block: Section.Block;
 
-        constructor(color: string, section: Section) {
+        constructor(color: string, section: Section, block: Section.Block) {
             super(color);
 
-            if (color && section) {
+            if (color && section && block) {
                 this.type = 'course';
                 this.section = section;
-                
-                let time = section.getTime();
-                this.days = section.days;
+                this.block = block;
+
+                let time = block.getTime();
+                this.days = block.days;
                 this.start = time.start;
                 this.end = time.end;
                 this.id = section.id;
@@ -60,14 +62,20 @@ namespace Base {
             return {
                 ...super.serialize(),
                 id: this.section.id,
+                block: this.section.blocks.indexOf(this.block),
             };
         }
 
         static deserialize(store: Vuex.Store<any>, raw: any): any {
-            let section = store.getters['courses/byId'](raw.id);
+            let section: Section = store.getters['courses/byId'](raw.id);
             let color = raw.color;
 
-            return new Course(color, section);
+            if (typeof raw.block != 'number')
+                raw.block = 0;
+
+            let block = section.blocks[raw.block];
+
+            return new Course(color, section, block);
         }
     }
 
@@ -76,8 +84,8 @@ namespace Base {
 
         readonly isLocked: boolean;
 
-        constructor(color: string, section: Section, isLocked: boolean) {
-            super(color, section);
+        constructor(color: string, section: Section, block: Section.Block, isLocked: boolean) {
+            super(color, section, block);
 
             if (color && section && isLocked !== undefined) {
                 this.type = 'generated-course';
@@ -100,8 +108,8 @@ namespace Base {
         readonly isHidden: boolean;
         readonly occurences: number;
 
-        constructor(color: string, section: Section, isHidden: boolean, occurences: number) {
-            super(color, section);
+        constructor(color: string, section: Section, block: Section.Block, isHidden: boolean, occurences: number) {
+            super(color, section, block);
 
             if (color && section && isHidden !== undefined && occurences !== undefined) {
                 this.type = 'preview-course';

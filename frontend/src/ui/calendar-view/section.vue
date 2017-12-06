@@ -1,23 +1,23 @@
 <template>
-    <div class="section" :class="classes" :style="style"
+    <v-layout class="section" :class="classes" :style="style"
         @mouseenter="hover = true" @mouseleave="hover = false"
         @mouseup="onClick" @contextmenu.prevent="onContextMenu">
         <div class="sideline" :style="sidelineStyle"/>
 
-        <div class="content">
+        <v-flex class="content">
             <div class="background" :style="backgroundStyle"/>
 
-            <div class="text">
-                <div class="id">
-                    <span>{{ id }}</span>
-                </div>
+            <v-layout column class="text">
+                <span class="id">{{ id }}</span>
 
-                <div class="title">
+                <div>
                     <span>{{ block.section.title }}</span>
                 </div>
 
                 <div class="row">
-                    <div class="spacer"/>
+                    <div class="number">
+                        <span>{{ block.section.id }}</span>
+                    </div>
 
                     <div class="location">
                         <span>{{ block.section.location }}</span>
@@ -27,12 +27,12 @@
                         <span v-if="interactive && block.isPreview">{{ block.occurences }}</span>
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
+            </v-layout>
+        </v-flex>
+    </v-layout>
 </template>
 
-<script lang="js">
+<script>
 import { mapGetters } from 'vuex';
 
 import * as keyboard from '@/workers/keyboard';
@@ -48,6 +48,7 @@ export default {
 
     data() {
         return {
+            ready: false,
             hover: false,
         };
     },
@@ -71,20 +72,6 @@ export default {
             while (course.length < 3) course = '0' + course;
 
             return `${this.subject} ${course} - ${this.block.section.component} ${sec}`;
-        },
-
-        style() {
-            let length = this.block.end - this.block.start;
-
-            let height = length / (this.dayEnd - this.dayStart);
-            let translate = (this.block.start - this.dayStart) / length;
-
-            return {
-                width: `calc(100% - ${8 * (this.group.size - 1)}px)`,
-                height: `${100 * height}%`,
-                transform: `translateY(${100 * translate}%)`,
-                marginLeft: `${8 * this.group.index}px`,
-            };
         },
 
         classes() {
@@ -114,6 +101,22 @@ export default {
                 backgroundColor: this.color,
             };
         },
+
+        style() {
+            if (!this.ready) return {};
+
+            let size = this.$parent.$el.getBoundingClientRect();
+
+            let height = (this.block.end - this.block.start) / (this.dayEnd - this.dayStart);
+            let top = (this.block.start - this.dayStart) / (this.dayEnd - this.dayStart);
+
+            return {
+                width: `calc(100% - ${8 * (this.group.size - 1)}px)`,
+                height: `${size.height * height}px`,
+                top: `${size.height * top}px`,
+                marginLeft: `${8 * this.group.index}px`,
+            };
+        }
     },
 
     created() {
@@ -123,6 +126,8 @@ export default {
     },
 
     mounted() {
+        this.ready = true;
+
         this.$el.onmousedown = (e) => {
             if (e.button == 1) {
                 e.preventDefault();
@@ -163,13 +168,11 @@ export default {
 };
 </script>
 
-<style lang="less" scoped>
+<style module lang="less">
 .section {
-    display: flex;
     cursor: default;
 
     position: absolute;
-    box-sizing: border-box;
     background-color: white;
 
     border: 1px solid lightgray;
@@ -202,7 +205,6 @@ export default {
 }
 
 .content {
-    flex: 1;
     position: relative;
 }
 

@@ -2,7 +2,7 @@ import * as Vuex from 'vuex';
 
 import * as json from '@/workers/json';
 
-import Course from '@/common/course';
+import Course from '@mfro/umich-scheduler-common/course';
 
 // import { Course } from '@/store/modules/generator';
 

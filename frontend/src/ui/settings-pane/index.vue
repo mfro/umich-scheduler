@@ -1,23 +1,14 @@
 <template>
-    <div class="settings">
-        <md-card class="calendar">
-            <md-toolbar class="md-dense md-transparent">
-                <div class="md-title">Calendar Settings</div>
-            </md-toolbar>
+    <v-card class="mt-3">
+        <v-card-title>
+            <span class="title">Calendar settings</span>
+        </v-card-title>
 
-            <md-card-content>
-                <md-input-container>
-                    <label>Day start</label>
-                    <md-input type="number" :value="dayStart" @input="setDayStart(+$event)"/>
-                </md-input-container>
-                
-                <md-input-container>
-                    <label>Day end</label>
-                    <md-input type="number" :value="dayEnd" @input="setDayEnd(+$event)"/>
-                </md-input-container>
-            </md-card-content>
-        </md-card>
-    </div>
+        <v-card-text>
+            <v-text-field type="number" label="Day start" :value="dayStart" @input="setDayStart(+$event)"/>
+            <v-text-field type="number" label="Day end" :value="dayEnd" @input="setDayEnd(+$event)"/>
+        </v-card-text>
+    </v-card>
 </template>
 
 <script>
@@ -41,7 +32,7 @@ export default {
 };
 </script>
 
-<style lang="less" scoped>
+<style module lang="less">
 .calendar {
     margin-top: 16px;
 }

@@ -1,14 +1,11 @@
 <template>
-    <div>
-        <md-input-container>
-            <label>Name</label>
-            <md-input v-model="nameInput"/>
-        </md-input-container>
+    <v-layout column px-3>
+        <v-text-field label="Name" v-model="nameInput"/>
 
-        <md-card-actions class="actions">
-            <md-button @click="save()" :disabled="!isValid">Save</md-button>
-        </md-card-actions>
-    </div>
+        <v-layout justify-end>
+            <v-btn @click="save()" :disabled="!isValid">Save</v-btn>
+        </v-layout>
+    </v-layout>
 </template>
 
 <script>
@@ -39,9 +36,11 @@ export default {
         save() {
             const schedule = {
                 name: this.nameInput,
-                blocks: this.current.map((b) => {
-                    return new Block.Course(b.color, b.section);
-                }),
+                blocks: [].concat(...this.current.map((s) => {
+                    return s.section.blocks.map((b) => {
+                        return new Block.Course(s.color, s.section, b);
+                    });
+                })),
             };
 
             this.$store.commit('schedules/save', schedule);
@@ -50,8 +49,5 @@ export default {
 };
 </script>
 
-<style lang="less" scoped>
-.actions {
-    margin: -16px;
-}
+<style module lang="less">
 </style>

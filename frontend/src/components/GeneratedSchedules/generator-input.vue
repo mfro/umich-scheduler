@@ -1,36 +1,33 @@
 <template>
-    <div>
-        <md-list class="list">
+    <v-layout column>
+        <v-list class="list">
             <schedule-course v-for="course in courses" :key="course.id" :course="course"/>
-        </md-list>
+        </v-list>
 
-        <div class="row">
-            <md-input-container>
-                <label>Course ID</label>
-                <md-input v-model="rawInput" @keydown.native="onKeyDown"/>
-            </md-input-container>
+        <v-layout px-3 align-center>
+            <v-text-field label="Course ID" v-model="rawInput" @keydown.native="onKeyDown"/>
 
-            <md-button class="md-icon-button" :disabled="!course" @click="submit()">
-                <md-icon>add</md-icon>
-            </md-button>
-        </div>
+            <v-btn flat icon :disabled="!course" @click="submit()">
+                <v-icon>add</v-icon>
+            </v-btn>
+        </v-layout>
 
-        <md-card-actions class="actions">
-            <md-button class="reset-button" @click="reset()">
+        <!-- <v-card-actions class="actions">
+            <v-button class="reset-button" @click="reset()">
                 Reset
-            </md-button>
-        </md-card-actions>
-    </div>
+            </v-button>
+        </v-card-actions> -->
+    </v-layout>
 </template>
 
 <script>
 import { mapGetters } from 'vuex';
 
-import Course from '@/common/course';
+import Course from '@mfro/umich-scheduler-common/course';
 import ScheduleCourse from './course.vue';
 
 export default {
-    name: 'generator-save',
+    name: 'generator-input',
 
     components: {
         ScheduleCourse,
@@ -79,18 +76,7 @@ export default {
 };
 </script>
 
-<style lang="less" scoped>
-.list {
-    margin: 0 -16px;
-}
-
-.row {
-    margin-top: -8px;
-
-    display: flex;
-    align-items: center;
-}
-
+<style module lang="less">
 .actions {
     margin: -16px;
 }

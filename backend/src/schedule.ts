@@ -31,6 +31,7 @@ export function find(term: Term, predicate: (section: Section) => boolean) {
                 let section = Section.parse(line);
 
                 if (!section) return;
+                if (match.indexOf(section) != -1) return;
                 if (!predicate(section)) return;
 
                 match.push(section);
@@ -77,7 +78,7 @@ function isStale(term: Term, etag: string) {
     console.log('Checking ETag...');
 
     return new Promise<boolean>((resolve, reject) => {
-        let args = url.parse(`http://www.ro.umich.edu/timesched/pdf/${term.registrarId}_open.csv`);
+        let args = url.parse(getUrl(term));
 
         const req = http.request({
             method: 'HEAD',
@@ -103,12 +104,12 @@ function download(term: Term) {
     const dir = path.dirname(files.csv);
 
     console.log('Downloading ETag...');
-    
+
     return new Promise<void>((resolve, reject) => {
         mkdirp(dir, (err, made) => {
             if (err) return reject(err);
 
-            let args = url.parse(`http://www.ro.umich.edu/timesched/pdf/${term.registrarId}_open.csv`);
+            let args = url.parse(getUrl(term));
 
             const req = http.request({
                 method: 'GET',
@@ -137,4 +138,9 @@ function download(term: Term) {
             req.end();
         });
     });
+}
+
+function getUrl(term: Term) {
+    return `http://www.ro.umich.edu/timesched/pdf/${term.registrarId}.csv`;
+    // return `http://www.ro.umich.edu/timesched/pdf/${term.registrarId}_open.csv`;
 }

@@ -1,12 +1,17 @@
 <template>
-    <md-list-item @click="toggle()" class="course">
-        <md-checkbox class="checkbox" :value="course.enabled"/>
-        <span class="id">{{ course.course.toString() }}</span>
+    <v-list-tile @click="toggle()" class="course">
+        <v-list-tile-action>
+            <v-checkbox class="checkbox" v-model="course.enabled"/>
+        </v-list-tile-action>
 
-        <md-button class="md-icon-button delete" @click="remove()">
-            <md-icon>delete</md-icon>
-        </md-button>
-    </md-list-item>
+        <v-list-tile-content>
+            <v-list-tile-title>{{ course.course.toString() }}</v-list-tile-title>
+        </v-list-tile-content>
+
+        <v-btn icon class="delete" @click="remove()">
+            <v-icon>delete</v-icon>
+        </v-btn>
+    </v-list-tile>
 </template>
 
 <script>
@@ -33,19 +38,13 @@ export default {
 };
 </script>
 
-<style lang="less" scoped>
-.course {
-    &:hover .delete {
-        opacity: 1;
-    }
+<style module lang="less">
+.course:hover .delete {
+    opacity: 1;
 }
 
 .checkbox {
     pointer-events: none;
-}
-
-.id {
-    flex: 1 1;
 }
 
 .delete {

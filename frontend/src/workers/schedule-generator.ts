@@ -1,8 +1,8 @@
-import * as messages from '@/frontend-generator';
+import * as messages from '@mfro/umich-scheduler-generator-worker';
 
 declare function require(path: string): any;
 
-const workerUrl = require('!file-loader!@/frontend-generator');
+const workerUrl = require('!file-loader!@mfro/umich-scheduler-generator-worker');
 
 let current: Worker | null;
 

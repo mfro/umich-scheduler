@@ -1,6 +1,6 @@
 # @mfro/umich-scheduler-frontend
 
-> Frontend UI for umich scheduler
+> A Vue.js project
 
 ## Build Setup
 

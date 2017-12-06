@@ -1,9 +1,10 @@
 import Vue from 'vue';
+import Vuetify from 'vuetify';
+import SpecificCSS from '@mfro/vue-specific-css';
 
-import Dispose from './dispose';
+Vue.use(Vuetify);
+Vue.use(SpecificCSS);
 
-import Toolbox from './toolbox.vue';
-
-Vue.use(Dispose);
-
-Vue.component('uikit-toolbox', Toolbox);
+import './v-mouse';
+import './dispose';
+import './vuetify.styl';

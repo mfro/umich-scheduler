@@ -1,4 +1,4 @@
-import Section from '@/common/section';
+import Section from '@mfro/umich-scheduler-common/section';
 
 import * as messages from './messages';
 import * as generator from './generator';
@@ -65,4 +65,3 @@ const handlers: { [type: string]: (m: messages.Message<any, any>) => void } = {
         });
     }
 };
-

@@ -20,7 +20,6 @@ module.exports = {
     resolve: {
         extensions: ['.js', '.ts'],
         alias: {
-          '@/common': resolve('../common'),
           '@': resolve('src')
         }
     },

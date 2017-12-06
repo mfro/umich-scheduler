@@ -24,7 +24,7 @@ export default {
     computed: {
         sorted() {
             let list = this.blocks.filter((s) => {
-                return s.section.days.includes(this.day);
+                return s.days.includes(this.day);
             }).map((s) => ({
                 block: s,
                 group: {},
@@ -76,7 +76,7 @@ export default {
 };
 </script>
 
-<style lang="less" scoped>
+<style module lang="less">
 .day {
     flex: 1 1;
     position: relative;

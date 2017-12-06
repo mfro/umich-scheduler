@@ -1,11 +1,20 @@
 <template>
-    <md-card class="schedule-nav">
-        <md-toolbar class="md-dense md-transparent">
-            <div class="md-title">View schedules</div>
-        </md-toolbar>
+    <v-card class="schedule-nav mt-3">
+        <v-card-title>
+            <span class="title">View schedules</span>
+        </v-card-title>
 
-        <md-card-area class="contents">
-            <md-list>
+        <v-card-text class="pa-0">
+            <v-list>
+                <v-list-tile to="/schedules/generated">
+                    <span>Generated</span>
+                </v-list-tile>
+
+                <v-list-tile v-for="schedule in saved" :key="schedule.id" :to="'/schedules/' + schedule.id">
+                    <span>{{ schedule.name }}</span>
+                </v-list-tile>
+            </v-list>
+            <!-- <md-list>
                 <md-list-item class="schedule">
                     <router-link to="/schedules/generated">
                         <span>Generated</span>
@@ -17,9 +26,9 @@
                         <span>{{ schedule.name }}</span>
                     </router-link>
                 </md-list-item>
-            </md-list>
-        </md-card-area>
-    </md-card>
+            </md-list> -->
+        </v-card-text>
+    </v-card>
 </template>
 
 <script>
@@ -36,11 +45,7 @@ export default {
 };
 </script>
 
-<style lang="less" scoped>
-.schedule-nav {
-    margin-top: 16px;
-}
-
+<style module lang="less">
 .schedule .router-link-active {
     background-color: #efefef;
 }

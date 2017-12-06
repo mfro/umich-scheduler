@@ -3,6 +3,18 @@ import Course from './course';
 const sections = new Map<number, Section>();
 const days = ['M', 'T', 'W', 'TH', 'F', 'S', 'SU'];
 
+function arrayEqual<T>(a: T[], b: T[]) {
+    if (a.length != b.length)
+        return false;
+
+    for (let i = 0; i < a.length; i++) {
+        if (a[i] != b[i])
+            return false;
+    }
+
+    return true;
+}
+
 class Section {
     readonly term: string;
     readonly session: string;
@@ -17,17 +29,15 @@ class Section {
     readonly component: string;
     readonly flags: string;
 
-    readonly days: string[]
-    readonly startDate: string;
-    readonly endDate: string;
-    readonly time: string;
-    readonly location: string;
+    readonly blocks: Section.Block[];
     readonly instructor: string;
     readonly credits: string;
 
     readonly totalSeats: number;
     readonly remainingSeats: number;
     readonly hasWaitlist: boolean;
+
+    // readonly isDuplicate: boolean;
 
     private constructor(parts: any | string[]) {
         if (parts instanceof Array) {
@@ -44,11 +54,14 @@ class Section {
             this.component = parts[8];
             this.flags = parts[9];
 
-            this.days = parts.slice(10, 17).filter(d => d != '');
-            this.startDate = parts[17];
-            this.endDate = parts[18];
-            this.time = parts[19];
-            this.location = parts[20];
+            this.blocks = [new Section.Block(
+                parts.slice(10, 17).filter(d => d != ''),
+                parts[17],
+                parts[18],
+                parts[19],
+                parts[20],
+            )];
+
             this.instructor = parts[21];
 
             if (parts.length == 23) {
@@ -58,7 +71,7 @@ class Section {
                 this.remainingSeats = parseInt(parts[23]);
                 this.hasWaitlist = parts[24] == "Y";
                 this.credits = parts[25];
-            } else  {
+            } else {
                 console.warn(`Parsing with ${parts.length} columns`);
             }
         } else {
@@ -75,11 +88,8 @@ class Section {
             this.component = parts.component;
             this.flags = parts.flags;
 
-            this.days = parts.days;
-            this.startDate = parts.startDate;
-            this.endDate = parts.endDate;
-            this.time = parts.time;
-            this.location = parts.location;
+            this.blocks = parts.blocks.map((raw: any) => new Section.Block(raw));
+
             this.instructor = parts.instructor;
             this.credits = parts.credits;
 
@@ -88,45 +98,27 @@ class Section {
             this.hasWaitlist = parts.hasWaitlist;
         }
 
-        let other = sections.get(this.id);
-        if (other && other != this) throw new Error('Duplicated sections');
+        // let other = sections.get(this.id);
+        // if (this.id == 11650) debugger;
+        // this.isDuplicate = other != null && other != this;
     }
 
-    getTime() {
-        if (this.time == 'ARR')
-            return { start: 0, end: 0 };
+    private merge(other: Section) {
+        if (this.id != other.id)
+            throw new Error('Merge invalid args');
 
-        let match = /(\d\d?)(30)?-(\d\d?)(30)?(\D+)/.exec(this.time);
+        for (let block of other.blocks) {
+            let found = false;
+            for (let existing of this.blocks) {
+                if (block.equals(existing)) {
+                    found = true;
+                    break;
+                }
+            }
+            if (found) continue;
 
-        if (!match) {
-            console.warn('Failed to parse time: ' + this.time);
-            return { start: 0, end: 0 };
+            this.blocks.push(block);
         }
-
-        let start = parseInt(match[1]);
-        if (match[2]) start += parseInt(match[2]) / 60;
-
-        let end = parseInt(match[3]);
-        if (match[4]) end += parseInt(match[4]) / 60;
-
-        let id = match[5];
-
-        if (id != 'AM' && id != 'PM') {
-            console.warn('Failed to parse time: ' + this.time);
-            return { start: 0, end: 0 };
-        }
-
-        if (id == 'PM' && end < 12) {
-            end += 12;
-
-            if (end - start > 4)
-                start += 12;
-        }
-
-        if (start > end)
-            debugger;
-
-        return { start: start, end: end };
     }
 
     getFlag() {
@@ -142,21 +134,25 @@ class Section {
     }
 
     isConcurrent(other: Section) {
-        for (let day of days) {
-            if (this.days.indexOf(day) < 0 ||
-                other.days.indexOf(day) < 0)
-                continue;
+        for (let block of this.blocks) {
+            for (let otherBlock of other.blocks) {
+                for (let day of days) {
+                    if (block.days.indexOf(day) < 0 ||
+                        otherBlock.days.indexOf(day) < 0)
+                        continue;
 
-            let aTime = this.getTime();
-            let bTime = other.getTime();
+                    let aTime = block.getTime();
+                    let bTime = otherBlock.getTime();
 
-            if (bTime.start >= aTime.start && bTime.start < aTime.end)
-                return true;
+                    if (bTime.start >= aTime.start && bTime.start < aTime.end)
+                        return true;
 
-            if (aTime.start >= bTime.start && aTime.start < bTime.end)
-                return true;
+                    if (aTime.start >= bTime.start && aTime.start < bTime.end)
+                        return true;
 
-            return false;
+                    return false;
+                }
+            }
         }
 
         return false;
@@ -186,37 +182,103 @@ class Section {
         if (!section) {
             section = new Section(cols);
             sections.set(id, section);
+        } else {
+            section.merge(new Section(cols));
         }
 
         return section;
     }
 
     static deserialize(raw: any) {
-        return new Section(raw);
+        let id = parseInt(raw.id);
+        let section = sections.get(id);
+        if (!section) {
+            section = new Section(raw);
+            sections.set(id, section);
+        }
+
+        return section;
+    }
+}
+
+namespace Section {
+    export class Block {
+        readonly days: string[];
+        readonly startDate: string;
+        readonly endDate: string;
+        readonly time: string;
+        readonly location: string;
+
+        constructor(raw: any)
+        constructor(
+            days: string[],
+            startDate: string,
+            endDate: string,
+            time: string,
+            location: string,
+        )
+        constructor(...args: any[]) {
+            if (arguments.length == 1) {
+                const raw = args[0];
+                this.days = raw.days;
+                this.startDate = raw.startDate;
+                this.endDate = raw.endDate;
+                this.time = raw.time;
+                this.location = raw.location;
+            } else {
+                this.days = args[0];
+                this.startDate = args[1];
+                this.endDate = args[2];
+                this.time = args[3];
+                this.location = args[4];
+            }
+        }
+
+        equals(other: Block) {
+            return this.time == other.time
+                && this.location == other.location
+                && this.endDate == other.endDate
+                && this.startDate == other.startDate
+                && arrayEqual(this.days, other.days);
+        }
+
+        getTime() {
+            if (this.time == 'ARR')
+                return { start: 0, end: 0 };
+
+            let match = /(\d\d?)(30)?-(\d\d?)(30)?(\D+)/.exec(this.time);
+
+            if (!match) {
+                console.warn('Failed to parse time: ' + this.time);
+                return { start: 0, end: 0 };
+            }
+
+            let start = parseInt(match[1]);
+            if (match[2]) start += parseInt(match[2]) / 60;
+
+            let end = parseInt(match[3]);
+            if (match[4]) end += parseInt(match[4]) / 60;
+
+            let id = match[5];
+
+            if (id != 'AM' && id != 'PM') {
+                console.warn('Failed to parse time: ' + this.time);
+                return { start: 0, end: 0 };
+            }
+
+            if (id == 'PM' && end < 12) {
+                end += 12;
+
+                if (end - start > 4)
+                    start += 12;
+            }
+
+            if (start > end)
+                debugger;
+
+            return { start: start, end: end };
+        }
     }
 }
 
 export default Section;
-// export default interface Section {
-//     term: string;
-//     session: string;
-//     academicGroup: string;
-//     id: number;
-//     subject: string;
-
-//     courseId: number;
-//     sectionId: number;
-
-//     title: string;
-//     component: string;
-//     flags: string;
-
-//     days: string[]
-//     startDate: string;
-//     endDate: string;
-//     time: string;
-//     location: string;
-//     instructor: string;
-//     credits: string;
-// }
-

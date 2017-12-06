@@ -43,7 +43,7 @@ export default {
 };
 </script>
 
-<style lang="less" scoped>
+<style module lang="less">
 .schedule-page {
     height: 100%;
     display: flex;

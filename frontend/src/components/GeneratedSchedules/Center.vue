@@ -30,7 +30,7 @@ export default {
 };
 </script>
 
-<style lang="less" scoped>
+<style module lang="less">
 .generated-schedules {
     height: 100%;
     display: flex;

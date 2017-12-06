@@ -2,8 +2,8 @@ import * as Vuex from 'vuex-ts';
 
 import request from '@/util/request';
 
-import Course from '@/common/course';
-import Section from '@/common/section';
+import Course from '@mfro/umich-scheduler-common/course';
+import Section from '@mfro/umich-scheduler-common/section';
 
 export const namespaced = true;
 
@@ -56,11 +56,10 @@ export const mutations: Vuex.Mutations<State, Mutations> = {
             args = [args];
 
         for (let section of args) {
-            let old = state.list.find(s => s.id == section.id);
-            if (old)
-                Object.assign(old, section);
-            else
-                state.list.push(section);
+            if (state.list.indexOf(section) != -1)
+                continue;
+
+            state.list.push(section);
         }
     },
 };

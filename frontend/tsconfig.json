@@ -6,11 +6,7 @@
 
         "allowSyntheticDefaultImports": true,
         
-        "alwaysStrict": true,
-        "noImplicitAny": true,
-        "noUnusedLocals": true,
-        "noImplicitThis": true,
-        "strictNullChecks": true,
+        "strict": true,
         "strictFunctionTypes": true,
 
         "outDir": "dist",
@@ -19,8 +15,7 @@
         "baseUrl": ".",
         "paths": {
             "@/*": [
-                "src/*",
-                "../*"
+                "src/*"
             ]
         }
     },

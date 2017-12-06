@@ -1,4 +1,4 @@
-import Section from '@/common/section';
+import Section from '@mfro/umich-scheduler-common/section';
 
 const maximum_size = 5000;
 
@@ -57,6 +57,16 @@ export function generate(request: GeneratorRequest, action?: Action): GeneratorR
 }
 
 function buildHelper(base: Block[], context: Context, index: number) {
+    let color = 'gray';
+
+    for (let check of colors) {
+        if (base.find(c => c.color == check))
+            continue;
+        
+        color = check;
+        break;
+    }
+
     if (index == context.request.courses.length) {
         for (let block of base) {
             if (!context.response.occurences[block.section.id])
@@ -96,7 +106,7 @@ function buildHelper(base: Block[], context: Context, index: number) {
         if (!fits(base, primary, context))
             continue;
 
-        let withPrimary = add(base, primary, context);
+        let withPrimary = add(base, color, primary, context);
 
         let autos = findAutoEnrolls(sections, primary);
         let isValid = true;
@@ -107,7 +117,7 @@ function buildHelper(base: Block[], context: Context, index: number) {
                 break;
             }
 
-            withPrimary = add(withPrimary, auto, context);
+            withPrimary = add(withPrimary, color, auto, context);
         }
 
         if (!isValid) {
@@ -124,7 +134,7 @@ function buildHelper(base: Block[], context: Context, index: number) {
             if (!fits(withPrimary, secondary, context))
                 continue;
 
-            let withSecondary = add(withPrimary, secondary, context);
+            let withSecondary = add(withPrimary, color, secondary, context);
             if (!buildHelper(withSecondary, context, index + 1))
                 return false;
         }
@@ -192,19 +202,9 @@ function fits(schedule: Block[], section: Section, context: Context) {
     return true;
 }
 
-function add(schedule: Block[], section: Section, context: Context) {
+function add(schedule: Block[], color: string, section: Section, context: Context) {
     if (!fits(schedule, section, context))
         throw new Error('Section does not fit');
-
-    let color;
-
-    for (let check of colors) {
-        if (schedule.find(c => c.color == check))
-            continue;
-        color = check;
-        break;
-    }
-    if (!color) color = 'gray';
 
     let copy = schedule.slice();
 

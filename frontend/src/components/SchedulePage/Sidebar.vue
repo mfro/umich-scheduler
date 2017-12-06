@@ -1,22 +1,19 @@
 <template>
     <div class="schedule-view-sidebar">
-        <md-card class="options" v-if="schedule">
-            <md-toolbar class="md-dense md-transparent">
-                <div class="md-title">Schedule options</div>
-            </md-toolbar>
+        <v-card class="options" v-if="schedule">
+            <v-card-title>
+                <span class="title">Schedule options</span>
+            </v-card-title>
 
-            <md-card-content>
-                <md-input-container>
-                    <label>Name</label>
-                    <md-input :value="schedule.name" @input="setName($event)"/>
-                </md-input-container>
-            </md-card-content>
+            <v-card-text>
+                <v-text-field label="Name" :value="schedule.name" @input="setName($event)"/>
+            </v-card-text>
 
-            <md-card-actions>
-                <md-button class="md-icon-button" @click="modify()"><md-icon>edit</md-icon></md-button>
-                <md-button class="md-icon-button" @click="del()"><md-icon>delete</md-icon></md-button>
-            </md-card-actions>
-        </md-card>
+            <v-card-actions>
+                <v-btn flat icon @click="modify()"><v-icon>edit</v-icon></v-btn>
+                <v-btn flat icon @click="del()"><v-icon>delete</v-icon></v-btn>
+            </v-card-actions>
+        </v-card>
     </div>
 </template>
 
@@ -78,7 +75,7 @@ export default {
 };
 </script>
 
-<style lang="less" scoped>
+<style module lang="less">
 .options {
     margin-top: 16px;
 }

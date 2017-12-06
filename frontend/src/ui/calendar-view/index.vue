@@ -72,7 +72,12 @@ export default {
         timeLabels() {
             let labels = [];
             for (let t = this.dayStart; t < this.dayEnd; t++) {
-                labels.push(t + ':00');
+                if (t == 12)
+                    labels.push('12 PM');
+                else if (t < 12)
+                    labels.push(`${t} AM`);
+                else
+                    labels.push(`${t % 12} PM`);
             }
             return labels;
         },
@@ -115,12 +120,14 @@ export default {
             });
             let getOccurences = this.$store.getters['generator/getOccurences'];
 
-            let previewing = sections.map((s) => {
+            let previewing = [].concat(...sections.map((s) => {
                 let isHidden = hidden.find((s2) => s2.id == s.id) != null;
                 let occurences = getOccurences(s);
 
-                return new Block.PreviewCourse(target.color, s, isHidden, occurences);
-            });
+                return s.blocks.map((b) => {
+                    return new Block.PreviewCourse(target.color, s, b, isHidden, occurences);
+                });
+            }));
 
             let base = this.blocks.filter((a) => a.isLocked);
             return base.concat(previewing.filter((a) => {
@@ -168,9 +175,11 @@ export default {
 
 </script>
 
-<style lang="less" scoped>
+<style module lang="less">
 .schedule-view {
-    height: 100%;
+    height: 100vh;
+    min-height: 800px;
+    max-width: 1400px;
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -178,7 +187,7 @@ export default {
 }
 
 .sidebar, .sidebar-spacer {
-    flex: 0 0 100px;
+    flex: 0 0 75px;
     box-sizing: border-box;
 }
 

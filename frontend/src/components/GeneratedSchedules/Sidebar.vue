@@ -1,38 +1,57 @@
 <template>
     <div class="generated-schedules-sidebar">
-        <md-card class="options">
-            <md-toolbar class="md-dense md-transparent">
-                <div class="md-title">Schedule generator</div>
-            </md-toolbar>
+        <v-card class="options">
+            <v-card-title>
+                <span class="title">Schedule generator</span>
+            </v-card-title>
 
-            <md-card-area class="md-inset">
+            <v-tabs>
+                <v-tabs-bar>
+                    <v-tabs-item ripple href="#edit">
+                        <v-icon>edit</v-icon>
+                    </v-tabs-item>
+                    <v-tabs-item ripple href="#save">
+                        <v-icon>save</v-icon>
+                    </v-tabs-item>
+                    <v-tabs-slider color="black"></v-tabs-slider>
+                </v-tabs-bar>
+
+                <v-tabs-items>
+                    <v-tabs-content id="edit">
+                        <generator-input/>
+                    </v-tabs-content>
+
+                    <v-tabs-content id="save">
+                        <generator-save/>
+                    </v-tabs-content>
+                </v-tabs-items>
+            </v-tabs>
+            <!-- <md-card-area class="md-inset">
                 <md-tabs md-fixed class="tabs md-transparent">
                     <md-tab md-icon="edit">
-                        <generator-input/>
                     </md-tab>
 
                     <md-tab md-icon="save">
-                        <generator-save/>
                     </md-tab>
                 </md-tabs>
-            </md-card-area>
+            </md-card-area> -->
 
-            <md-card-actions class="nav-area" :class="{ active: isReady }">
-                <md-button class="md-icon-button" @click="nav(-1)" ref="leftArrow">
-                    <md-icon>chevron_left</md-icon>
-                </md-button>
+            <v-card-actions class="nav-area" :class="{ active: isReady }">
+                <v-btn icon @click="nav(-1)">
+                    <v-icon>chevron_left</v-icon>
+                </v-btn>
 
                 <span class="display">{{ index + 1 }}</span>
                 <span class="display">of</span>
                 <span class="display">{{ total }}</span>
 
-                <md-button class="md-icon-button" @click="nav(1)" ref="rightArrow">
-                    <md-icon>chevron_right</md-icon>
-                </md-button>
-            </md-card-actions>
+                <v-btn icon @click="nav(1)">
+                    <v-icon>chevron_right</v-icon>
+                </v-btn>
+            </v-card-actions>
 
-            <md-progress class="progress" :class="{ active: isLoading }" md-indeterminate/>
-        </md-card>
+            <v-progress-linear class="progress" :class="{ active: isLoading }" indeterminate/>
+        </v-card>
     </div>
 </template>
 
@@ -83,7 +102,7 @@ export default {
 };
 </script>
 
-<style lang="less" scoped>
+<style module lang="less">
 .options {
     margin-top: 16px;
 }
@@ -109,12 +128,11 @@ export default {
 
 .progress {
     opacity: 0;
-    position: absolute;
     bottom: 0;
+    position: absolute;
 
     &.active {
         opacity: 1;
     }
 }
-
 </style>

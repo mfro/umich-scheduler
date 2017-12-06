@@ -1,19 +1,26 @@
 <template>
-    <div class="root">
-        <div class="sidebar">
-            <router-view name="sidebar"/>
-        </div>
+    <v-app>
+        <v-layout column class="root">
+            <v-layout>
+                <v-flex class="sidebar" pl-3 pr-2>
+                    <router-view name="sidebar"/>
+                </v-flex>
 
-        <div class="center">
-            <router-view/>
-        </div>
+                <v-layout class="sidebar" column pr-2 pl-2>
+                    <schedule-nav/>
+                    <settings-pane/>
+                </v-layout>
+                
+                <v-layout column class="sidebar" pr-3 pl-2>
+                    <help-pane/>
+                </v-layout>
+            </v-layout>
 
-        <div class="sidebar">
-            <schedule-nav/>
-            <settings-pane/>
-            <help-pane/>
-        </div>
-    </div>
+            <v-flex mt-3>
+                <router-view/>
+            </v-flex>
+        </v-layout>
+    </v-app>
 </template>
 
 <script>
@@ -30,16 +37,15 @@ export default {
 };
 </script>
 
-<style scoped lang="less">
+<style module lang="less">
 .root {
-    display: flex;
+    height: 100%;
 }
 
 .sidebar {
-    flex: 1 0;
+    flex: 1 1 0;
     display: flex;
     flex-direction: column;
-    padding: 0 16px 16px 16px;
 }
 
 .center {
