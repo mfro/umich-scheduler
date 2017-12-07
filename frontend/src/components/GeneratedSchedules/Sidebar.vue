@@ -5,7 +5,7 @@
                 <span class="title">Schedule generator</span>
             </v-card-title>
 
-            <v-tabs>
+            <v-tabs fixed>
                 <v-tabs-bar>
                     <v-tabs-item ripple href="#edit">
                         <v-icon>edit</v-icon>
@@ -26,15 +26,6 @@
                     </v-tabs-content>
                 </v-tabs-items>
             </v-tabs>
-            <!-- <md-card-area class="md-inset">
-                <md-tabs md-fixed class="tabs md-transparent">
-                    <md-tab md-icon="edit">
-                    </md-tab>
-
-                    <md-tab md-icon="save">
-                    </md-tab>
-                </md-tabs>
-            </md-card-area> -->
 
             <v-card-actions class="nav-area" :class="{ active: isReady }">
                 <v-btn icon @click="nav(-1)">
