@@ -72,12 +72,9 @@ export default {
         timeLabels() {
             let labels = [];
             for (let t = this.dayStart; t < this.dayEnd; t++) {
-                if (t == 12)
-                    labels.push('12 PM');
-                else if (t < 12)
-                    labels.push(`${t} AM`);
-                else
-                    labels.push(`${t % 12} PM`);
+                if (t == 12) labels.push('12 PM');
+                else if (t < 12) labels.push(`${t} AM`);
+                else labels.push(`${t % 12} PM`);
             }
             return labels;
         },

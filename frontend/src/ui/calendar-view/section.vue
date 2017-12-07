@@ -116,7 +116,7 @@ export default {
                 top: `${size.height * top}px`,
                 marginLeft: `${8 * this.group.index}px`,
             };
-        }
+        },
     },
 
     created() {
