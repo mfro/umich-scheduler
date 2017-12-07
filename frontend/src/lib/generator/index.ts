@@ -1,16 +1,15 @@
-import * as messages from '@mfro/umich-scheduler-generator-worker';
+import * as messages from './messages';
+import SchedulerWorker from 'worker-loader!./worker';
 
 declare function require(path: string): any;
 
-const workerUrl = require('!file-loader!@mfro/umich-scheduler-generator-worker');
-
-let current: Worker | null;
+let currentWorker: SchedulerWorker | null;
 
 function async<TReq, TRes>(type: string, request: TReq, p: (m: messages.Any) => boolean) {
-    if (current == null)
+    if (currentWorker == null)
         return Promise.reject(new Error('No active worker'));
 
-    current.postMessage({
+    currentWorker.postMessage({
         type: type,
         payload: request
     });
@@ -19,25 +18,21 @@ function async<TReq, TRes>(type: string, request: TReq, p: (m: messages.Any) => 
         function handle(e: MessageEvent) {
             if (!p(e.data)) return;
 
-            current!.removeEventListener('message', handle);
+            currentWorker!.removeEventListener('message', handle);
             resolve(e.data.payload);
         }
 
-        current!.addEventListener('message', handle);
+        currentWorker!.addEventListener('message', handle);
     });
 }
 
-function newWorker() {
-    if (current != null) {
-        current.terminate();
-        current = null;
+export function generate(request: messages.GeneratePayload) {
+    if (currentWorker != null) {
+        currentWorker.terminate();
+        currentWorker = null;
     }
 
-    current = new Worker(workerUrl);
-}
-
-export function generate(request: messages.GeneratePayload) {
-    newWorker();
+    currentWorker = new SchedulerWorker();
 
     return async<messages.GeneratePayload, messages.SummaryPayload>('generate', request, m => {
         return m.type == 'summary';

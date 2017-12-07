@@ -20,7 +20,6 @@
   "devDependencies": {
     "@mfro/promise-extensions": "^2.0.1",
     "@mfro/umich-scheduler-common": "file:../common",
-    "@mfro/umich-scheduler-generator-worker": "file:../generator-worker",
     "@mfro/vue-specific-css": "^1.0.1",
     "autoprefixer": "^7.1.2",
     "babel-core": "^6.22.1",
@@ -64,7 +63,8 @@
     "webpack": "^3.6.0",
     "webpack-bundle-analyzer": "^2.9.0",
     "webpack-dev-server": "^2.9.1",
-    "webpack-merge": "^4.1.0"
+    "webpack-merge": "^4.1.0",
+    "worker-loader": "^1.1.0"
   },
   "engines": {
     "node": ">= 4.0.0",

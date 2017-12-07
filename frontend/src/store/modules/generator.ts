@@ -2,8 +2,8 @@ import * as Vuex from 'vuex-ts';
 
 import * as save from '@/store/plugins/save';
 
-import Block from '@/workers/block.ts';
-import * as generator from '@/workers/schedule-generator.ts';
+import Block from '@/lib/block';
+import * as generator from '@/lib/generator';
 
 import Course from '@mfro/umich-scheduler-common/course';
 import Section from '@mfro/umich-scheduler-common/section';

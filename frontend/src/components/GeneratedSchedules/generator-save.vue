@@ -11,7 +11,7 @@
 <script>
 import { mapGetters } from 'vuex';
 
-import Block from '@/workers/block';
+import Block from '@/lib/block';
 
 export default {
     name: 'generator-save',

@@ -2,7 +2,7 @@ import * as Vuex from 'vuex-ts';
 
 import * as save from '@/store/plugins/save';
 
-import Block from '@/workers/block';
+import Block from '@/lib/block';
 
 export const namespaced = true;
 

@@ -3,11 +3,9 @@ import Section from '@mfro/umich-scheduler-common/section';
 import * as messages from './messages';
 import * as generator from './generator';
 
-export * from './messages';
+const ctx: Worker = self as any;
 
-declare function postMessage(arg: any): void;
-
-addEventListener('message', e => {
+ctx.addEventListener('message', e => {
     const msg = e.data as messages.Message<any, any>;
 
     const handler = handlers[msg.type];
@@ -21,7 +19,7 @@ addEventListener('message', e => {
 });
 
 function send<T extends messages.Message<any, any>>(m: T) {
-    postMessage(m);
+    ctx.postMessage(m);
 }
 
 let summary: messages.SummaryPayload | null = null;

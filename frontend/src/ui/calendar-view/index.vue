@@ -33,7 +33,7 @@
 import { mapGetters } from 'vuex';
 
 import CalendarDay from './day.vue';
-import Block from '@/workers/block';
+import Block from '@/lib/block';
 
 const days = [
     { name: 'Monday', id: 'M' },

@@ -35,7 +35,7 @@
 <script>
 import { mapGetters } from 'vuex';
 
-import * as keyboard from '@/workers/keyboard';
+import * as keyboard from '@/lib/keyboard';
 
 export default {
     name: 'calendar-section',

@@ -1,6 +1,6 @@
 import * as Vuex from 'vuex';
 
-import * as json from '@/workers/json';
+import * as json from '@/lib/json';
 
 import Course from '@mfro/umich-scheduler-common/course';
 

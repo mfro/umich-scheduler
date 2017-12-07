@@ -61,7 +61,7 @@ import { mapGetters } from 'vuex';
 import GeneratorInput from './generator-input';
 import GeneratorSave from './generator-save';
 
-import * as keyboard from '@/workers/keyboard';
+import * as keyboard from '@/lib/keyboard';
 
 export default {
     name: 'generated-schedules-sidebar',
