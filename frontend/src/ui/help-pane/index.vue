@@ -6,7 +6,7 @@
             </v-card-title>
 
             <v-card-text class="text">
-                <p>Add courses at the left side of the screen. Example: <pre>MATH 215</pre></p>
+                <p>Add courses at the left side of the screen. Using the Schedule generator options. Example: <pre>MATH 215</pre></p>
                 
                 <p>Courses can be toggled off to exclude them from the schedule.</p>
                 
@@ -36,13 +36,13 @@
             </v-card-title>
 
             <v-card-text class="text">
-                <p>Use the <v-icon>save</v-icon> tab to save a schedule.</p>
+                <p>Use the Save schedule box to save a schedule.</p>
                 
-                <p>Access saved schedules on the right side of the screen.</p>
+                <p>You can view saved schedules.</p>
                     
                 <p>
                     While viewing a schedule, click the <v-icon>edit</v-icon> button
-                    to load it into the generator.
+                    to load it into the generator, allowing further editing
                 </p>
             </v-card-text>
         </template>
@@ -70,7 +70,6 @@ export default {
     flex: 1 1;
     display: flex;
     flex-direction: column;
-    margin-top: 16px;
 }
 
 .text {

@@ -5,11 +5,11 @@ import './uikit';
 
 import RootComponent from './App.vue';
 import store from './store';
-import router from './router';
+// import router from './router';
 
 let app = new Vue({
     store,
-    router,
+    // router,
     mixins: [RootComponent]
 });
 

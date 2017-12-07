@@ -1,11 +1,17 @@
 <template>
-    <v-layout column px-3>
-        <v-text-field label="Name" v-model="nameInput"/>
+    <v-card class="options">
+        <v-card-title>
+            <span class="title">Save schedule</span>
+        </v-card-title>
 
-        <v-layout justify-end>
+        <v-card-text>
+            <v-text-field label="Name" v-model="nameInput"/>
+        </v-card-text>
+
+        <v-card-actions>
             <v-btn @click="save()" :disabled="!isValid">Save</v-btn>
-        </v-layout>
-    </v-layout>
+        </v-card-actions>
+    </v-card>
 </template>
 
 <script>
@@ -50,4 +56,7 @@ export default {
 </script>
 
 <style module lang="less">
+.options {
+    margin-top: 16px;
+}
 </style>

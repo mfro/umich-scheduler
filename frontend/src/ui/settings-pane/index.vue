@@ -1,5 +1,5 @@
 <template>
-    <v-card class="mt-3">
+    <v-card>
         <v-card-title>
             <span class="title">Calendar settings</span>
         </v-card-title>
@@ -33,7 +33,4 @@ export default {
 </script>
 
 <style module lang="less">
-.calendar {
-    margin-top: 16px;
-}
 </style>

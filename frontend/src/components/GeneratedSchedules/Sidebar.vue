@@ -5,7 +5,7 @@
                 <span class="title">Schedule generator</span>
             </v-card-title>
 
-            <v-tabs fixed>
+            <v-tabs>
                 <v-tabs-bar>
                     <v-tabs-item ripple href="#edit">
                         <v-icon>edit</v-icon>
