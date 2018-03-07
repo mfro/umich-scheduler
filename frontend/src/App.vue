@@ -88,7 +88,7 @@ export default {
 
     data() {
         return {
-            isCompact: window.innerWidth < 1890,
+            isCompact: window.innerWidth < 1850,
             viewing: null,
             sidebarStyle: {
                 willChange: 'transform',
@@ -112,6 +112,10 @@ export default {
         }),
 
         current() {
+            if (this.viewing) {
+                return this.viewing.blocks;
+            }
+
             return this.generated || [];
         },
 
@@ -122,7 +126,7 @@ export default {
 
     methods: {
         resize() {
-            this.isCompact = window.innerWidth < 1890;
+            this.isCompact = window.innerWidth < 1850;
         },
     },
 };
@@ -142,12 +146,12 @@ export default {
 }
 
 .sidebar {
-    flex: 0 0 300px;
+    flex: 0 0 280px;
     display: flex;
     flex-direction: column;
 
     > div {
-        width: 300px;
+        width: 280px;
         position: fixed;
     }
 }

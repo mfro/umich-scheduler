@@ -1,4 +1,4 @@
-import Section from '@mfro/umich-scheduler-common/section';
+import Section from '@common/section';
 
 const maximum_size = 5000;
 

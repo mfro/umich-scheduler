@@ -1,14 +1,14 @@
 import * as Vuex from 'vuex';
 
-import Section from '@mfro/umich-scheduler-common/section';
+import Section from '@common/section';
 
 abstract class Base {
-    public type: string;
+    public type = "";
 
-    public days: string[];
-    public start: number;
-    public end: number;
-    public id: string | number;
+    public days = new Array<string>();
+    public start = 0;
+    public end = 0;
+    public id: string | number = 0;
 
     constructor(
         public color = 'black',
@@ -39,8 +39,8 @@ namespace Base {
     export class Course extends Base {
         readonly isCourse = true;
 
-        readonly section: Section;
-        readonly block: Section.Block;
+        readonly section: Section = <any>null;
+        readonly block: Section.Block = <any>null;
 
         constructor(color: string, section: Section, block: Section.Block) {
             super(color);
@@ -90,6 +90,8 @@ namespace Base {
             if (color && section && isLocked !== undefined) {
                 this.type = 'generated-course';
                 this.isLocked = isLocked;
+            } else {
+                this.isLocked = false;
             }
         }
 
@@ -115,6 +117,9 @@ namespace Base {
                 this.type = 'preview-course';
                 this.isHidden = isHidden;
                 this.occurences = occurences;
+            } else {
+                this.isHidden = false;
+                this.occurences = 0;
             }
         }
 

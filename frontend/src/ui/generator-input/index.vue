@@ -37,7 +37,7 @@
 <script>
 import { mapGetters } from 'vuex';
 
-import Course from '@mfro/umich-scheduler-common/course';
+import Course from '@common/course';
 import ScheduleCourse from './course.vue';
 
 import * as keyboard from '@/lib/keyboard';

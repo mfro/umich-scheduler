@@ -1,4 +1,4 @@
-import Section from '@mfro/umich-scheduler-common/section';
+import Section from '@common/section';
 
 import * as messages from './messages';
 import * as generator from './generator';

@@ -1,7 +1,7 @@
 import * as Vuex from 'vuex';
 
 import Block from './block';
-import Course from '@mfro/umich-scheduler-common/course';
+import Course from '@common/course';
 
 const discriminant = '_is';
 

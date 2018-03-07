@@ -5,8 +5,8 @@ import * as save from '@/store/plugins/save';
 import Block from '@/lib/block';
 import * as generator from '@/lib/generator';
 
-import Course from '@mfro/umich-scheduler-common/course';
-import Section from '@mfro/umich-scheduler-common/section';
+import Course from '@common/course';
+import Section from '@common/section';
 
 export const namespaced = true;
 

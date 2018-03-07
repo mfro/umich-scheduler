@@ -66,12 +66,19 @@ class Section {
 
             if (parts.length == 23) {
                 this.credits = parts[22];
+                this.totalSeats = 0;
+                this.remainingSeats = 0;
+                this.hasWaitlist = false;
             } else if (parts.length == 26) {
                 this.totalSeats = parseInt(parts[22]);
                 this.remainingSeats = parseInt(parts[23]);
                 this.hasWaitlist = parts[24] == "Y";
                 this.credits = parts[25];
             } else {
+                this.credits = "";
+                this.totalSeats = 0;
+                this.remainingSeats = 0;
+                this.hasWaitlist = false;
                 console.warn(`Parsing with ${parts.length} columns`);
             }
         } else {
