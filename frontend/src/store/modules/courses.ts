@@ -25,7 +25,7 @@ export interface Actions {
     load: Course;
 }
 
-const term = 'winter2018';
+const term = 'fall2018';
 let backend_url: string;
 if (location.hostname == 'mfro.me')
     backend_url = 'https://api.mfro.me/scheduler'

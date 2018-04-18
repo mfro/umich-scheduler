@@ -2,17 +2,17 @@ FROM node:6
 
 ENV NPM_CONFIG_LOGLEVEL warn
 
-ADD . /app
+ADD ./backend /app/backend
+ADD ./common /app/common
 
 WORKDIR /app/backend
 
-RUN npm install
-RUN npm run build
+RUN yarn install
+RUN yarn build
 
 ENV NODE_ENV production
 
-RUN npm prune
-RUN npm install
+RUN yarn install
 
 EXPOSE 8081
 

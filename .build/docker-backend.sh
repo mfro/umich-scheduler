@@ -1,4 +1,4 @@
 docker build\
-    -t docker.mfro.me/umich-scheduler-backend\
+    -t mfro/umich-scheduler\
     -f backend/Dockerfile\
     .
