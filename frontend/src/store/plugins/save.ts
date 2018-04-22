@@ -41,7 +41,7 @@ export default function init(store: Vuex.Store<any>) {
     load(store).catch(console.error);
 }
 
-function load(store: Vuex.Store<any>) {
+async function load(store: Vuex.Store<any>) {
     let courses: string[];
 
     try {
@@ -55,42 +55,46 @@ function load(store: Vuex.Store<any>) {
 
     is_loading = true;
 
-    return Promise.each(courses, raw => {
-        let course = Course.parse(raw);
-        return store.dispatch('courses/load', course);
-    }).then(() => {
-        let save: SaveFile2;
-        
-        try {
-            let raw = localStorage.getItem(save_key2);
-            if (!raw) return Promise.resolve();
-            save = json.deserialize(store, raw);
-            if (!save) return Promise.resolve();
-        } catch (e) {
-            return Promise.reject(e);
-        }
+    for (let raw of courses) {
+        let course = await Course.parse(raw);
+        await store.dispatch('courses/load', course);
+    }
 
-        for (let item of save.contents) {
-            let keys = item.path.split('.');
+    apply(store)
 
-            let node = store.state;
+    await store.dispatch('generator/generate');
 
-            for (let i = 0; i < keys.length - 1; i++) {
-                node = node[keys[i]];
+    is_loading = false;
+}
 
-                if (node == null) {
-                    console.warn('Invalid save path: ' + item.path);
-                    break;
-                }
+function apply(store: Vuex.Store<any>) {
+    let save: SaveFile2;
+
+    try {
+        let raw = localStorage.getItem(save_key2);
+        if (!raw) return;
+        save = json.deserialize(store, raw);
+        if (!save) return;
+    } catch (e) {
+        throw e;
+    }
+
+    for (let item of save.contents) {
+        let keys = item.path.split('.');
+
+        let node = store.state;
+
+        for (let i = 0; i < keys.length - 1; i++) {
+            node = node[keys[i]];
+
+            if (node == null) {
+                console.warn('Invalid save path: ' + item.path);
+                break;
             }
-            
-            node[keys[keys.length - 1]] = item.value;
         }
-    }).then(() => {
-        return store.dispatch('generator/generate');
-    }).then(() => {
-        is_loading = false;
-    });
+
+        node[keys[keys.length - 1]] = item.value;
+    }
 }
 
 function save(store: Vuex.Store<any>) {

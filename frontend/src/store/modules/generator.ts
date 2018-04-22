@@ -266,22 +266,26 @@ export const actions: Vuex.Actions<State, Getters, Mutations, Actions> = {
         });
     },
 
-    setIndex({ commit, state, getters, rootGetters }, number) {
+    async setIndex({ commit, state, getters, rootGetters }, number) {
         commit('SET_INDEX', number);
 
         const request = {
             index: getters.currentIndex,
         };
 
-        return generator.get(request).each(s => {
-            let section: Section = rootGetters['courses/byId'](s.id);
-            let blocks = section.blocks.filter(b => b.startDate != b.endDate);
+        let allBlocks = new Array<Block>();
+        let sections = await generator.get(request);
 
-            return blocks.map(b => new Block.GeneratedCourse(s.color, section, b, s.locked));
-        }).then(blocks => {
-            let all = (<Block.GeneratedCourse[]>[]).concat(...blocks);
-            commit('SET_CURRENT', all);
-        });
+        for (let s of sections) {
+            let section: Section = rootGetters['courses/byId'](s.id);
+            let blocks = section.blocks
+                .filter(b => b.startDate != b.endDate)
+                .map(b => new Block.GeneratedCourse(s.color, section, b, s.locked));
+
+            allBlocks = allBlocks.concat(blocks);
+        }
+
+        commit('SET_CURRENT', allBlocks);
     },
 
     toggleCourse({ commit, dispatch, getters, rootGetters }, course) {

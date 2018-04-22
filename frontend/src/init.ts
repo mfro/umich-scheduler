@@ -1,6 +1,3 @@
-import ExtendPromise from '@mfro/promise-extensions';
-ExtendPromise(Promise);
-
 import Vue from 'vue';
 import Raven from 'raven-js';
 import RavenVue from 'raven-js/plugins/vue';

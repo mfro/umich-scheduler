@@ -12,7 +12,7 @@ app.use((req, res, next) => {
     next();
 });
 
-app.get('/terms/:term/courses/:id', (req, res, next) => {
+app.get('/terms/:term/courses/:id', async (req, res, next) => {
     let id: string = req.params.id;
     let course = Course.parse(id);
 
@@ -26,16 +26,16 @@ app.get('/terms/:term/courses/:id', (req, res, next) => {
         return;
     }
 
-    schedule.find(term, s => {
-        return course.isSection(s);
-    }).then(list => {
+    try {
+        let list = await schedule.find(term, s => course.isSection(s));
+    
         res.statusCode = 200;
         res.json(list);
-    }).catch(e => {
+    } catch (e) {
         console.log(e);
         res.statusCode = 500;
         res.json({ error: e });
-    });
+    }
 });
 
 export function start(port: number) {

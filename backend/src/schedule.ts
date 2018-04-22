@@ -19,27 +19,27 @@ function getFiles(term: Term) {
 
 const cache = new Map<string, Date>();
 
-export function find(term: Term, predicate: (section: Section) => boolean) {
-    return getSchedule(term).then(src => {
-        return new Promise<Section[]>((resolve, reject) => {
-            let match = new Array<Section>();
+export async function find(term: Term, predicate: (section: Section) => boolean) {
+    let src = await getSchedule(term);
 
-            let total = 0;
+    return new Promise<Section[]>((resolve, reject) => {
+        let match = new Array<Section>();
 
-            src.on('line', line => {
-                total++;
-                let section = Section.parse(line);
+        let total = 0;
 
-                if (!section) return;
-                if (match.indexOf(section) != -1) return;
-                if (!predicate(section)) return;
+        src.on('line', line => {
+            total++;
+            let section = Section.parse(line);
 
-                match.push(section);
-            });
+            if (!section) return;
+            if (match.indexOf(section) != -1) return;
+            if (!predicate(section)) return;
 
-            src.on('close', () => {
-                resolve(match);
-            });
+            match.push(section);
+        });
+
+        src.on('close', () => {
+            resolve(match);
         });
     });
 }
