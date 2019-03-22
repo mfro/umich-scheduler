@@ -1,0 +1,19 @@
+{
+  "name": "@mfro/umich-scheduler-v2-backend",
+  "description": "University of Michigan schedule builder backend",
+  "author": "mfro",
+  "version": "1.0.0",
+  "license": "MIT",
+  "main": "main.js",
+  "scripts": {
+    "build": "rollup -c rollup.config.js",
+    "watch": "rollup -c rollup.config.js --watch"
+  },
+  "dependencies": {
+    "express": "^4.16.2",
+    "fs-extra": "^7.0.1"
+  },
+  "devDependencies": {
+    "rollup": "^1.7.0"
+  }
+}
