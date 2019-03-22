@@ -35,7 +35,15 @@ export const seasons = {
 
 export const FALL_17 = new CTerm(2017, seasons.FALL);
 export const WINTER_18 = new CTerm(2018, seasons.WINTER);
+
 export const FALL_18 = new CTerm(2018, seasons.FALL);
+export const WINTER_19 = new CTerm(2019, seasons.WINTER);
+
+export const FALL_19 = new CTerm(2019, seasons.FALL);
+export const WINTER_20 = new CTerm(2020, seasons.WINTER);
+
+export const FALL_20 = new CTerm(2020, seasons.FALL);
+export const WINTER_21 = new CTerm(2021, seasons.WINTER);
 
 export function parse(id: string) {
     for (let term of all)

@@ -141,6 +141,6 @@ function download(term: Term) {
 }
 
 function getUrl(term: Term) {
-    return `http://www.ro.umich.edu/timesched/pdf/${term.registrarId}.csv`;
+    return `http://ro.umich.edu/sites/default/files/timesched/pdf/${term.registrarId}_open.csv`;
     // return `http://www.ro.umich.edu/timesched/pdf/${term.registrarId}_open.csv`;
 }
