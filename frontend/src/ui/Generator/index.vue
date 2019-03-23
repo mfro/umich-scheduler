@@ -34,9 +34,9 @@
 
       <span class="display">{{ index + 1 }}</span>
       <span class="display">of</span>
-      <span class="display">{{ results ? results.schedules.length : 0 }}</span>
+      <span class="display">{{ results.scheduleCount }}</span>
 
-      <v-btn icon @click="++index" :disabled="index + 1 == results.schedules.length">
+      <v-btn icon @click="++index" :disabled="index + 1 == results.scheduleCount">
         <v-icon>chevron_right</v-icon>
       </v-btn>
     </v-card-actions>
@@ -48,7 +48,7 @@
 <script>
 import Vue from 'vue';
 
-import * as worker from '@/worker';
+import { generate } from '@/worker';
 
 import ScheduleCourse from './ScheduleCourse';
 
@@ -67,9 +67,11 @@ export default {
     return {
       index: 0,
       results: null,
+      currentResult: null,
+
       isLoading: false,
 
-      courses: [{ "id": "EECS281", "label": "EECS 281", "enabled": true }, { "id": "EECS370", "label": "EECS 370", "enabled": true }, { "id": "EECS376", "label": "EECS 376", "enabled": true }],
+      courses: [],
 
       rawInput: '',
     };
@@ -94,37 +96,62 @@ export default {
       }).filter(c => c);
 
       return {
+        type: 'generate',
         courses,
         locked: this.settings.locked,
         hidden: this.settings.hidden,
       };
     },
-
-    currentResult() {
-      if (!this.results) return null;
-      return this.results.schedules[this.index];
-    },
   },
 
   watch: {
     async generateArgs(value) {
-      let start = performance.now();
+      console.log(value);
       this.isLoading = true;
-      this.results = await worker.generate(value);
       this.index = 0;
-      this.isLoading = false;
-      let end = performance.now();
+      generate.postMessage(value);
+    },
 
-      let duration = end - start;
-      console.debug(`generated in ${duration}`);
+    index(value) {
+      generate.postMessage({ type: 'get', index: value });
     },
 
     currentResult(value) {
       this.$emit('input', value);
     },
+
+    courses: {
+      deep: true,
+      handler(value) {
+        localStorage.setItem('umich-scheduler.courses', JSON.stringify(value));
+      },
+    }
+  },
+
+  created() {
+    generate.addEventListener('message', this.onMessage);
+    this.$use(() => generate.removeEventListener('message', this.onMessage));
+
+    let raw = localStorage.getItem('umich-scheduler.courses');
+    if (raw) {
+      this.courses = JSON.parse(raw);
+      for (let course of this.courses) {
+        this.$store.dispatch('load', course.id);
+      }
+    }
   },
 
   methods: {
+    onMessage(e) {
+      let m = e.data;
+      if (m.type == 'results') {
+        this.results = m;
+        this.isLoading = !m.complete;
+      } else if (m.type == 'schedule') {
+        this.currentResult = m.schedule;
+      }
+    },
+
     onKeyDown(e) {
       if (e.keyCode == 13 && this.input) this.submit();
     },

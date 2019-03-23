@@ -1,13 +1,8 @@
-import fs from 'fs-extra';
-import https from 'https';
-import readline from 'readline';
-
 import express from 'express';
 
-import { performance } from 'perf_hooks';
+import * as schedule from './schedule';
 
 const app = express();
-const cacheExpirations = new Map();
 
 app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
@@ -35,62 +30,6 @@ function wrap(fn) {
     };
 }
 
-function fetchSchedule(term, outPath) {
-    return new Promise((resolve, reject) => {
-        const req = https.request({
-            method: (outPath ? 'GET' : 'HEAD'),
-            protocol: 'https:',
-            hostname: 'ro.umich.edu',
-            path: `/sites/default/files/timesched/pdf/${term}.csv`
-        }, res => {
-            if (outPath) {
-                const dst = fs.createWriteStream(outPath, 'utf8');
-                res.pipe(dst);
-                res.on('end', () => resolve(res.headers.etag));
-            } else {
-                resolve(res.headers.etag);
-            }
-
-            res.on('error', reject);
-
-        });
-
-        req.on('error', reject);
-
-        req.end();
-    });
-}
-
-function filterSchedule(src, subjectId, courseId) {
-    return new Promise((resolve, reject) => {
-        let filtered = ``;
-
-        src.on('line', line => {
-            let regex = /"([^"]*)",/g;
-            let match;
-
-            let fields = [];
-            while (match = regex.exec(line)) {
-                fields.push(match[1].trim());
-            }
-
-            if (fields.length != 23) return;
-
-            let thisSubjectId = /\(([A-Z]+)\)/.exec(fields[4])[1];
-            let thisCourseId = parseInt(fields[5]);
-
-            if (thisCourseId != courseId || thisSubjectId != subjectId)
-                return;
-
-            filtered += line + '\n';
-        });
-
-        src.on('close', () => {
-            resolve(filtered);
-        });
-    });
-}
-
 app.get('/term/:term/course/:id', wrap(async (req, res, next) => {
     let id = req.params.id;
     let match = /([A-Za-z]+)\s*(\d+)/.exec(id);
@@ -102,41 +41,10 @@ app.get('/term/:term/course/:id', wrap(async (req, res, next) => {
 
     let term = req.params.term;
 
-    let basePath = `data/${term}`;
-    let csvPath = basePath + '.csv';
-    let etagPath = basePath + '.etag';
-
-    let now = performance.now();
-    let expiration = cacheExpirations.get(basePath) || 0;
-
-    let currentTag = null;
-    try { currentTag = await fs.readFile(etagPath, 'utf8'); } catch (e) { }
-
-    if (!currentTag || !await fs.exists(csvPath)) {
-        console.log(`no data found for '${term}', fetching`)
-        let correctTag = await fetchSchedule(term, csvPath);
-        await fs.writeFile(etagPath, correctTag, 'utf8');
-    } else if (expiration <= now) {
-        console.log(`cache expired, checking etag`)
-        let correctTag = await fetchSchedule(term);
-        if (currentTag != correctTag) {
-            console.log(`etag invalid, fetching`)
-            await fetchSchedule(term, csvPath);
-            await fs.writeFile(etagPath, correctTag, 'utf8');
-        } else {
-            console.log(`etag valid`)
-        }
-    }
-
-    cacheExpirations.set(basePath, now + 60 * 1000);
-
-    let raw = fs.createReadStream(csvPath, 'utf8');
-    let src = readline.createInterface({ input: raw });
-
-    let list = await filterSchedule(src, subject, courseId);
+    let content = await schedule.findCourses(term, subject, courseId);
     res.statusCode = 200;
     res.set('content-type', 'text/plain');
-    res.send(list);
+    res.send(content);
 }));
 
 app.listen(parseInt(process.argv[2] || 8081));

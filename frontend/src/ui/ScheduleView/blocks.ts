@@ -1,5 +1,11 @@
 import { Section, SectionMeeting } from '@/model';
-import { ResultBlock } from '@/worker/generate';
+// import { ResultBlock } from '@/worker/generate';
+
+interface ResultBlock {
+    color: string;
+    locked: boolean;
+    section: Section;
+}
 
 export function preview(src: Section, color: string, isHidden: boolean, occurrences: number): PreviewCourseBlock[] {
     return src.meetings.map<PreviewCourseBlock>((m, i) => {

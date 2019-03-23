@@ -7,7 +7,7 @@ Vue.use(Vuex)
 
 const TERM = 'FA2019';
 
-function parseCSV(csv: string) {
+export function parseCSV(csv: string) {
   let courses = new Map<String, Course>();
   let sections = new Map<number, Section>();
 

@@ -1,25 +1,54 @@
 <template>
   <div class="schedule-view">
-    <div class="header">
+    <div class="sidebar">
       <div class="sidebar-spacer"/>
 
+      <div class="time-button top">
+        <v-btn flat icon @click="display.dayStart--" :disabled="display.dayStart == 1" class="ma-0">
+          <v-icon>expand_less</v-icon>
+        </v-btn>
+      </div>
+      <div class="time-button bot">
+        <v-btn flat icon @click="display.dayEnd++" :disabled="display.dayEnd == 24" class="ma-0">
+          <v-icon>expand_more</v-icon>
+        </v-btn>
+      </div>
+
+      <div
+        class="time"
+        v-for="time in timeLabels"
+        :key="time.value"
+        :style="timeStyle"
+        :class="time.class"
+      >
+        <div
+          class="time-click top"
+          v-if="time != timeLabels[0]"
+          @click="display.dayStart = time.value"
+          @mouseenter="displayPreview.dayStart = time.value"
+          @mouseleave="displayPreview.dayStart = null"
+        />
+        <div
+          class="time-click bot"
+          v-if="time != timeLabels[timeLabels.length - 1]"
+          @click="display.dayEnd = time.value + 1"
+          @mouseenter="displayPreview.dayEnd = time.value + 1"
+          @mouseleave="displayPreview.dayEnd = null"
+        />
+        <span style="position: relative; pointer-events: none">{{ time.label }}</span>
+      </div>
+    </div>
+
+    <div class="body">
       <div class="day-labels">
         <div class="label" v-for="day in days" :key="day.id">
           <span>{{ day.name }}</span>
         </div>
       </div>
-    </div>
-
-    <div class="body">
-      <div class="sidebar">
-        <div class="time" v-for="time in timeLabels" :key="time" :style="timeStyle">
-          <span>{{ time }}</span>
-        </div>
-      </div>
 
       <div class="calendar">
         <div class="lines">
-          <div class="line" v-for="time in timeLabels" :key="time" :style="lineStyle"/>
+          <div class="line" v-for="time in timeLabels" :key="time.value" :style="lineStyle"/>
         </div>
 
         <calendar-day
@@ -74,6 +103,8 @@ export default {
         dayEnd: 18,
       },
 
+      displayPreview: { dayStart: null, dayEnd: null, },
+
       previewTarget: null,
     };
   },
@@ -82,9 +113,22 @@ export default {
     timeLabels() {
       let labels = [];
       for (let t = this.display.dayStart; t < this.display.dayEnd; t++) {
-        if (t == 12) labels.push('12 PM');
-        else if (t < 12) labels.push(`${t} AM`);
-        else labels.push(`${t % 12} PM`);
+        let label;
+        if (t == 12) label = '12 PM';
+        else if (t < 12) label = `${t} AM`;
+        else label = `${t % 12} PM`;
+
+        let fade = false;
+        if (this.displayPreview.dayStart && t < this.displayPreview.dayStart)
+          fade = true;
+        else if (this.displayPreview.dayEnd && t >= this.displayPreview.dayEnd)
+          fade = true;
+
+        labels.push({
+          value: t,
+          label,
+          class: { fade },
+        });
       }
       return labels;
     },
@@ -168,6 +212,14 @@ export default {
         this.previewTarget = block;
       }
     },
+
+    increaseHour() {
+      this.display.dayEnd++;
+    },
+
+    decreaseHour() {
+      this.display.dayStart--;
+    },
   },
 };
 
@@ -179,14 +231,66 @@ export default {
   min-height: 800px;
   flex: 1;
   display: flex;
-  flex-direction: column;
-  align-self: flex-start;
 }
 
-.sidebar,
-.sidebar-spacer {
-  flex: 0 0 75px;
-  box-sizing: border-box;
+.sidebar {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+
+  .sidebar-spacer {
+    flex: 0 0 3em;
+  }
+
+  .time-button {
+    position: absolute;
+    width: 100%;
+    height: 3em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    left: 0;
+    z-index: 1;
+
+    &.top {
+      top: 0;
+    }
+
+    &.bot {
+      bottom: 0;
+    }
+  }
+
+  .time {
+    position: relative;
+    padding-left: 1.5em;
+    padding-right: 8px;
+
+    &.fade {
+      color: rgba(0,0,0,.5)
+    }
+  }
+
+  .time-click {
+    position: absolute;
+    width: 100%;
+    height: 50%;
+    left: 0;
+    cursor: pointer;
+
+    &:hover {
+      background-color: #efefef;
+    }
+
+    &.top {
+      top: 0;
+    }
+
+    &.bot {
+      bottom: 0;
+    }
+  }
 }
 
 .header {
@@ -194,12 +298,12 @@ export default {
 }
 
 .day-labels {
-  flex: 1;
+  flex: 0 0 3em;
   display: flex;
+  align-items: center;
 
   .label {
     flex: 1;
-    padding: 10px 0;
     text-align: center;
   }
 }
@@ -207,13 +311,8 @@ export default {
 .body {
   flex: 1;
   display: flex;
-  overflow: hidden;
-}
-
-.sidebar {
-  padding-right: 10px;
-  display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .time {

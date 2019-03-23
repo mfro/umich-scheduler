@@ -3,29 +3,67 @@ import { generate } from '.';
 import { Course, Section } from '@/model';
 
 let work = self as unknown as Worker;
+let context: Context | null;
 
 work.addEventListener('message', e => {
-    let args = e.data as generate.args;
+    let start = performance.now();
+    console.log('start 1', start);
 
-    let context = {
-        action: null,
-        request: {
-            courses: args.courses,
-            hidden: args.hidden,
-            locked: args.locked,
-        },
-        response: {
-            schedules: [],
-            occurences: {},
-        },
-    };
+    if (e.data.type == 'get') {
+        let index = e.data.index as number;
 
-    buildHelper([], context, 0);
+        work.postMessage({
+            type: 'schedule',
+            schedule: context!.response.schedules[index],
+        });
+    } else {
+        let args = e.data as generate.args;
 
-    work.postMessage(context.response);
+        context = {
+            emit() {
+                let count = context!.response.schedules.length;
+
+                if (count == 1) {
+                    work.postMessage({
+                        type: 'schedule',
+                        schedule: context!.response.schedules[0],
+                    });
+                } else if (count % 1000 != 0)
+                    return;
+
+                work.postMessage({
+                    type: 'results',
+                    complete: false,
+                    occurences: context!.response.occurences,
+                    scheduleCount: context!.response.schedules.length,
+                });
+            },
+            request: {
+                courses: args.courses,
+                hidden: args.hidden,
+                locked: args.locked,
+            },
+            response: {
+                schedules: [],
+                occurences: {},
+            },
+        };
+
+        buildHelper([], context, 0);
+
+        work.postMessage({
+            type: 'results',
+            complete: true,
+            occurences: context!.response.occurences,
+            scheduleCount: context!.response.schedules.length,
+        });
+
+        let end = performance.now();
+        console.log('end 1', context!.response.schedules.length, end, end - start);
+    }
 });
 
-const MAXIMUM_SIZE = 5000;
+const MAXIMUM_SIZE = 1000000;
 
 const colors = [
     '#16a765',
@@ -41,26 +79,24 @@ const colors = [
     '#cabdbf',
 ];
 
-export type Action = (index: number, schedule: ResultBlock[], status: GeneratorResponse) => void;
-
 interface Context {
-    action: Action | null;
+    emit: () => void;
     request: GeneratorRequest;
     response: GeneratorResponse;
 }
 
-export interface GeneratorRequest {
+interface GeneratorRequest {
     courses: Course[];
     hidden: number[];
     locked: number[];
 }
 
-export interface GeneratorResponse {
+interface GeneratorResponse {
     schedules: ResultBlock[][];
     occurences: { [id: number]: number };
 }
 
-export interface ResultBlock {
+interface ResultBlock {
     color: string;
     locked: boolean;
     section: Section;
@@ -85,10 +121,9 @@ function buildHelper(base: ResultBlock[], context: Context, index: number) {
                 context.response.occurences[block.section.id]++;
         }
 
-        let resultIndex = context.response.schedules.length;
-
         context.response.schedules.push(base);
-        context.action && context.action(resultIndex, base, context.response);
+
+        context.emit();
 
         return context.response.schedules.length < MAXIMUM_SIZE;
     }
@@ -213,8 +248,8 @@ function fits(schedule: ResultBlock[], section: Section, context: Context) {
 }
 
 function add(schedule: ResultBlock[], color: string, section: Section, context: Context) {
-    if (!fits(schedule, section, context))
-        throw new Error('Section does not fit');
+    // if (!fits(schedule, section, context))
+    //     throw new Error('Section does not fit');
 
     let copy = schedule.slice();
 
