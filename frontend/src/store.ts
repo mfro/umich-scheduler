@@ -44,6 +44,9 @@ export default new Vuex.Store({
     sections: [] as Section[],
   },
   getters: {
+    courseById: (s) => (id: string) => {
+      return s.courses.find(s => `${s.subjectId}${s.courseId}` == id);
+    },
     sectionById: (s) => (id: number) => {
       return s.sections.find(s => s.id == id);
     },
@@ -67,14 +70,18 @@ export default new Vuex.Store({
     },
   },
   actions: {
-    async load({ commit }, id) {
-      const raw = await request<string>(`http://localhost:8081/term/${TERM}/course/${id}`);
+    async load({ commit, getters }, id) {
+      let old = getters.courseById(id);
+      if (old) return old;
 
-      let courses = [...parseCSV(raw)];
+      const csv = await request<string>(`http://localhost:8081/term/${TERM}/course/${id}`);
+
+      let courses = [...parseCSV(csv)];
       if (courses.length != 1)
         console.warn(`Parsed multiple courses in 'load ${id}'`);
 
       commit('ADD_COURSE', courses);
+      return courses[0];
     },
   },
 });

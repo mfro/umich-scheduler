@@ -1,5 +1,4 @@
 import { Course, Section, SectionMeeting } from '@/model';
-import request from '@/util/request';
 
 const courses = new Map<string, Course>();
 
@@ -31,30 +30,35 @@ function parseCSV(csv: string) {
     }
 }
 
-let work = self as unknown as Worker;
+// let work = self as unknown as Worker;
 
-work.addEventListener('message', async e => {
-    parseCSV(e.data);
+// work.addEventListener('message', async e => {
+//     parseCSV(e.data);
 
-    let start = performance.now();
-    console.log('start 2', start);
+//     let start = performance.now();
+//     console.log('start 2', start);
 
-    let generator = new Generator({
-        courses: [...courses.keys()],
-        hidden: [],
-        locked: [],
-    });
+//     let generator = new Generator({
+//         courses: [...courses.keys()],
+//         hidden: [],
+//         locked: [],
+//     });
 
-    let count = 0;
-    while (true) {
-        let next = generator.next();
-        if (next == null) break;
-        ++count;
-    }
+//     let count = 0;
+//     while (true) {
+//         let next = generator.next();
+//         if (next == null) break;
+//         ++count;
 
-    let end = performance.now();
-    console.log('end 2', count, end, end - start);
-});
+//         if (count % 1000 == 0) {
+//             let mark = performance.now();
+//             console.log('mark 2', count, mark, mark - start);
+//         }
+//     }
+
+//     let end = performance.now();
+//     console.log('end 2', count, end, end - start);
+// });
 
 const colors = [
     '#16a765',
@@ -71,7 +75,7 @@ const colors = [
 ];
 
 export interface Input {
-    courses: string[];
+    courses: Course[];
     hidden: number[];
     locked: number[];
 }
@@ -82,7 +86,7 @@ interface ResultBlock {
     section: Section;
 }
 
-class Generator {
+export class Generator {
     segments: {
         index: number,
         color: number,
@@ -96,8 +100,8 @@ class Generator {
     ) {
         let color = 0;
 
-        for (let id of input.courses) {
-            let course = courses.get(id)!;
+        for (let course of input.courses) {
+            // let course = courses.get(id)!;
             let locked = course.sections.filter(s => input.locked.includes(s.id));
 
             let lockedPrimary = locked.find(s => s.flags.includes('P'));

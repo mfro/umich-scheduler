@@ -14,7 +14,14 @@
       />
 
       <v-layout px-3 align-center>
-        <v-btn flat icon :disabled="!input" @click="submit()" class="ml-0">
+        <v-btn
+          flat
+          icon
+          :disabled="!input || isLoadingInput"
+          :loading="isLoadingInput"
+          @click="submit()"
+          class="ml-0"
+        >
           <v-icon>add</v-icon>
         </v-btn>
 
@@ -41,7 +48,7 @@
       </v-btn>
     </v-card-actions>
 
-    <v-progress-linear class="progress" :class="{ active: isLoading }" indeterminate/>
+    <v-progress-linear class="progress" :class="{ active: isGenerating }" indeterminate/>
   </v-card>
 </template>
 
@@ -49,6 +56,7 @@
 import Vue from 'vue';
 
 import { generate } from '@/worker';
+import { Generator } from '@/worker/generate-v2';
 
 import ScheduleCourse from './ScheduleCourse';
 
@@ -69,7 +77,8 @@ export default {
       results: null,
       currentResult: null,
 
-      isLoading: false,
+      isGenerating: false,
+      isLoadingInput: false,
 
       courses: [],
 
@@ -82,11 +91,7 @@ export default {
       let match = /([a-zA-Z]+)\s*(\d{3})/.exec(this.rawInput);
       if (!match) return null;
 
-      return {
-        id: `${match[1].toUpperCase()}${match[2]}`,
-        label: `${match[1].toUpperCase()} ${match[2]}`,
-        enabled: true,
-      };
+      return `${match[1].toUpperCase()}${match[2]}`;
     },
 
     generateArgs() {
@@ -106,10 +111,28 @@ export default {
 
   watch: {
     async generateArgs(value) {
-      console.log(value);
-      this.isLoading = true;
+      this.isGenerating = true;
       this.index = 0;
       generate.postMessage(value);
+
+      let generator = new Generator(value);
+      let count = 0;
+
+      function tick(finish) {
+        let limit = performance.now() + 1;
+        while (performance.now() < limit) {
+          let next = generator.next();
+          ++count;
+          if (count % 1000 == 0) console.log('x', count);
+          if (next == null) return finish();
+        }
+
+        setTimeout(tick.bind(this, finish), 2);
+      }
+
+      tick(() => {
+        console.log('done');
+      });
     },
 
     index(value) {
@@ -146,20 +169,36 @@ export default {
       let m = e.data;
       if (m.type == 'results') {
         this.results = m;
-        this.isLoading = !m.complete;
+        this.isGenerating = !m.complete;
       } else if (m.type == 'schedule') {
         this.currentResult = m.schedule;
       }
     },
 
     onKeyDown(e) {
-      if (e.keyCode == 13 && this.input) this.submit();
+      if (e.keyCode == 13 && this.input && !this.isLoadingInput) this.submit();
     },
 
-    submit() {
-      this.$store.dispatch('load', this.input.id);
-      this.courses.push(this.input);
+    async submit() {
+      let id = this.input;
+
       this.rawInput = '';
+
+      if (this.courses.find(c => c.id == id))
+        return;
+
+      this.isLoadingInput = true;
+      let course = await this.$store.dispatch('load', id);
+      this.isLoadingInput = false;
+
+      if (!course)
+        return;
+
+      this.courses.push({
+        id: id,
+        label: `${course.subjectId} ${course.courseId}`,
+        enabled: true,
+      });
     },
   },
 };
