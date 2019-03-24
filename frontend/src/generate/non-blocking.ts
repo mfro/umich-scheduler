@@ -1,78 +1,79 @@
 import { Course, Section, SectionMeeting } from '@/model';
 
 const courses = new Map<string, Course>();
+const work = self as unknown as Worker;
 
-function parseCSV(csv: string) {
-    let sections = new Map<number, Section>();
+let instance: Generator | null = null;
 
-    for (let line of csv.split('\n')) {
-        let regex = /"([^"]*)",/g;
-        let match;
+function tick(gen: Generator) {
+    if (gen != instance) return;
 
-        let fields = [];
-        while (match = regex.exec(line)) {
-            fields.push(match[1].trim());
+    let complete = false;
+
+    for (let i = 0; i < 10000; ++i) {
+        if (gen.next() == null) {
+            complete = true;
+            break;
         }
+    }
 
-        if (fields.length != 23) continue;
+    work.postMessage({
+        type: 'progress',
+        body: {
+            complete: complete,
+            occurrences: gen.occurrences,
+            scheduleCount: gen.schedules.length,
+        },
+    });
 
-        let subjectId = /\(([A-Z]+)\)/.exec(fields[4])![1];
-        let courseId = parseInt(fields[5]);
-        let sectionId = parseInt(fields[3]);
-
-        let course = courses.get(subjectId + courseId);
-        if (!course) courses.set(subjectId + courseId, course = Course.parse(fields));
-
-        let section = sections.get(sectionId);
-        if (!section) sections.set(sectionId, section = Section.parse(course, fields));
-
-        section.meetings.push(SectionMeeting.parse(fields));
+    if (!complete) {
+        setTimeout(tick.bind(null, gen), 1);
     }
 }
 
-// let work = self as unknown as Worker;
+work.addEventListener('message', async e => {
+    switch (e.data.type) {
+        case 'courses': {
+            let args = e.data.body as Course[];
+            for (let course of args) {
+                courses.set(Course.id(course), course);
+            }
+            break;
+        }
+        case 'get': {
+            let index = e.data.body as number;
 
-// work.addEventListener('message', async e => {
-//     parseCSV(e.data);
+            let result;
+            if (!instance || index < 0 || index >= instance.schedules.length)
+                result = null;
+            else
+                result = instance.schedules[index].map(s => s.id);
 
-//     let start = performance.now();
-//     console.log('start 2', start);
+            work.postMessage({
+                type: 'get',
+                body: result,
+            });
+            break;
+        }
+        case 'run': {
+            let args = e.data.body as {
+                courses: string[],
+                hidden: number[],
+                locked: number[],
+            }
 
-//     let generator = new Generator({
-//         courses: [...courses.keys()],
-//         hidden: [],
-//         locked: [],
-//     });
+            let input = {
+                courses: args.courses.map(id => courses.get(id)).filter(c => c) as Course[],
+                hidden: args.hidden,
+                locked: args.locked,
+            };
 
-//     let count = 0;
-//     while (true) {
-//         let next = generator.next();
-//         if (next == null) break;
-//         ++count;
-
-//         if (count % 1000 == 0) {
-//             let mark = performance.now();
-//             console.log('mark 2', count, mark, mark - start);
-//         }
-//     }
-
-//     let end = performance.now();
-//     console.log('end 2', count, end, end - start);
-// });
-
-const colors = [
-    '#16a765',
-    '#4986e7',
-    '#f83a22',
-    '#ffad46',
-    '#d06b64',
-    '#9a9cff',
-    '#ff7537',
-    '#7bd148',
-    '#ac725e',
-    '#42d692',
-    '#cabdbf',
-];
+            instance = new Generator(input);
+            tick(instance);
+            break;
+        }
+    }
+});
 
 export interface Input {
     courses: Course[];
@@ -80,29 +81,23 @@ export interface Input {
     locked: number[];
 }
 
-interface ResultBlock {
-    color: string;
-    locked: boolean;
-    section: Section;
-}
-
 export class Generator {
-    segments: {
-        index: number,
-        color: number,
-        options: Section[][],
-    }[] = [];
+    locked: Set<number>;
+    hidden: Set<number>;
 
-    occurences: { [id: number]: number } = {};
+    segments: { index: number, options: Section[][] }[] = [];
+
+    schedules: Section[][] = [];
+    occurrences: { [id: number]: number } = {};
 
     constructor(
         readonly input: Input,
     ) {
-        let color = 0;
+        this.locked = new Set(input.locked);
+        this.hidden = new Set(input.hidden);
 
         for (let course of input.courses) {
-            // let course = courses.get(id)!;
-            let locked = course.sections.filter(s => input.locked.includes(s.id));
+            let locked = course.sections.filter(s => this.locked.has(s.id));
 
             let lockedPrimary = locked.find(s => s.flags.includes('P'));
             let lockedAutos = locked.filter(s => s.flags.includes('A'));
@@ -120,10 +115,8 @@ export class Generator {
             else
                 secondaries = course.sections.filter(s => s.flags.includes('S'));
 
-            console.log(`${course.subjectId} ${course.courseId}: ${primaries.length} primary`)
             this.segments.push({
                 index: 0,
-                color,
                 options: primaries.map(p => {
                     let autos = findAutoEnrolls(course, p);
                     return [p, ...autos];
@@ -131,43 +124,41 @@ export class Generator {
             });
 
             if (secondaries.length > 0) {
-                console.log(`${course.subjectId} ${course.courseId}: ${secondaries.length} secondary`)
                 this.segments.push({
                     index: 0,
-                    color,
                     options: secondaries.map(s => [s]),
                 });
             }
-
-            ++color;
         }
     }
 
     next() {
-        let final = this.buildHelper([], 0);
-        if (final == null) return null;
+        let done = this.buildHelper([], 0);
+        if (done) return null;
 
-        for (let block of final) {
-            if (!this.occurences[block.section.id])
-                this.occurences[block.section.id] = 1;
+        let final = this.schedules[this.schedules.length - 1];
+
+        for (let section of final) {
+            if (!this.occurrences[section.id])
+                this.occurrences[section.id] = 1;
             else
-                this.occurences[block.section.id]++;
+                this.occurrences[section.id]++;
         }
 
         return final;
     }
 
-    buildHelper(schedule: ResultBlock[], index: number): ResultBlock[] | null {
+    buildHelper(schedule: Section[], index: number): boolean {
         let segment = this.segments[index];
 
         primaryLoop:
         while (true) {
             if (segment.index == segment.options.length) {
                 segment.index = 0;
-                return null;
+                return true;
             }
 
-            let build = schedule;
+            let build = schedule.slice();
 
             for (let section of segment.options[segment.index]) {
                 if (!this.isValid(build, section)) {
@@ -175,20 +166,22 @@ export class Generator {
                     continue primaryLoop;
                 }
 
-                build = this.add(build, colors[segment.color], section);
+                build.push(section);
             }
 
             if (index + 1 == this.segments.length) {
                 ++segment.index;
-                return build;
+                this.schedules.push(build);
+
+                return false;
             } else {
-                let final = this.buildHelper(build, index + 1);
-                if (final == null) {
+                let advance = this.buildHelper(build, index + 1);
+                if (advance) {
                     ++segment.index;
                     continue primaryLoop;
                 }
 
-                return final;
+                return false;
             }
         }
     }
@@ -198,32 +191,17 @@ export class Generator {
      * @param schedule Existing schedule to compare
      * @param section Potential addition
      */
-    isValid(schedule: ResultBlock[], section: Section) {
+    isValid(schedule: Section[], section: Section) {
         if (this.input.hidden.indexOf(section.id) != -1)
             return false;
 
         for (let existing of schedule) {
-            if (!Section.isCompatible(section, existing.section)) {
+            if (!Section.isCompatible(section, existing)) {
                 return false;
             }
         }
 
         return true;
-    }
-
-    add(schedule: ResultBlock[], color: string, section: Section) {
-        if (!this.isValid(schedule, section))
-            throw new Error('Section does not fit');
-
-        let copy = schedule.slice();
-
-        copy.push({
-            color: color,
-            locked: this.input.locked.indexOf(section.id) != -1,
-            section: section,
-        });
-
-        return copy;
     }
 }
 

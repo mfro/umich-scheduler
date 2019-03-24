@@ -91,6 +91,7 @@ export default {
   props: {
     settings: Object,
     schedule: Array,
+    occurrences: Object,
     interactive: { default: true },
   },
 
@@ -170,9 +171,9 @@ export default {
 
       let previewing = [].concat(...sections.map((s) => {
         let isHidden = this.settings.hidden.includes(s.id);
-        let occurences = 1;
+        let occurrences = this.occurrences[s.id] || 0;
 
-        return blocks.preview(s, target.color, isHidden, occurences);
+        return blocks.preview(s, target.color, isHidden, occurrences);
       }));
 
       let locked = base.filter((a) => a.isLocked);

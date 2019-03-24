@@ -34,16 +34,16 @@
       </v-layout>
     </v-list>
 
-    <v-card-actions class="nav-area" v-if="results" :class="{ active: results != null }">
+    <v-card-actions class="nav-area" v-if="status" :class="{ active: status != null }">
       <v-btn icon @click="--index" :disabled="index == 0">
         <v-icon>chevron_left</v-icon>
       </v-btn>
 
       <span class="display">{{ index + 1 }}</span>
       <span class="display">of</span>
-      <span class="display">{{ results.scheduleCount }}</span>
+      <span class="display">{{ status.scheduleCount }}</span>
 
-      <v-btn icon @click="++index" :disabled="index + 1 == results.scheduleCount">
+      <v-btn icon @click="++index" :disabled="index + 1 == status.scheduleCount">
         <v-icon>chevron_right</v-icon>
       </v-btn>
     </v-card-actions>
@@ -55,10 +55,24 @@
 <script>
 import Vue from 'vue';
 
-import { generate } from '@/worker';
-import { Generator } from '@/worker/generate-v2';
-
 import ScheduleCourse from './ScheduleCourse';
+
+import { Course } from '@/model';
+import * as generate from '@/generate';
+
+const colors = [
+  '#16a765',
+  '#4986e7',
+  '#f83a22',
+  '#ffad46',
+  '#d06b64',
+  '#9a9cff',
+  '#ff7537',
+  '#7bd148',
+  '#ac725e',
+  '#42d692',
+  '#cabdbf',
+];
 
 export default {
   name: 'generator',
@@ -74,7 +88,7 @@ export default {
   data() {
     return {
       index: 0,
-      results: null,
+      status: null,
       currentResult: null,
 
       isGenerating: false,
@@ -95,51 +109,40 @@ export default {
     },
 
     generateArgs() {
-      let courses = this.courses.map(c => {
-        if (!c.enabled) return null;
-        return this.$store.state.courses.find(c2 => c2.subjectId + c2.courseId == c.id);
-      }).filter(c => c);
+      let courses = this.courses
+        .filter(c => c.enabled)
+        .map(c => c.id);
 
       return {
-        type: 'generate',
         courses,
         locked: this.settings.locked,
         hidden: this.settings.hidden,
       };
     },
+
+    output() {
+      if (!this.currentResult || !this.status)
+        return;
+
+      return { schedule: this.currentResult, occurrences: this.status.occurrences };
+    },
   },
 
   watch: {
-    async generateArgs(value) {
+    generateArgs(value) {
       this.isGenerating = true;
       this.index = 0;
-      generate.postMessage(value);
 
-      let generator = new Generator(value);
-      let count = 0;
+      generate.start(value);
 
-      function tick(finish) {
-        let limit = performance.now() + 1;
-        while (performance.now() < limit) {
-          let next = generator.next();
-          ++count;
-          if (count % 1000 == 0) console.log('x', count);
-          if (next == null) return finish();
-        }
-
-        setTimeout(tick.bind(this, finish), 2);
-      }
-
-      tick(() => {
-        console.log('done');
-      });
+      this.isGenerating = false;
     },
 
-    index(value) {
-      generate.postMessage({ type: 'get', index: value });
+    async index(value) {
+      this.getCurrentResult();
     },
 
-    currentResult(value) {
+    output(value) {
       this.$emit('input', value);
     },
 
@@ -152,40 +155,51 @@ export default {
   },
 
   created() {
-    generate.addEventListener('message', this.onMessage);
-    this.$use(() => generate.removeEventListener('message', this.onMessage));
+    this.$use(generate.listen(this.onProgress));
 
     let raw = localStorage.getItem('umich-scheduler.courses');
     if (raw) {
-      this.courses = JSON.parse(raw);
-      for (let course of this.courses) {
-        this.$store.dispatch('load', course.id);
-      }
+      let courses = JSON.parse(raw);
+      for (let course of courses)
+        this.addCourse(course.id, course.enabled);
     }
   },
 
   methods: {
-    onMessage(e) {
-      let m = e.data;
-      if (m.type == 'results') {
-        this.results = m;
-        this.isGenerating = !m.complete;
-      } else if (m.type == 'schedule') {
-        this.currentResult = m.schedule;
-      }
+    onProgress(e) {
+      this.status = e;
+      this.getCurrentResult();
+    },
+
+    async getCurrentResult() {
+      let ids = await generate.get(this.index);
+
+      let color = 0;
+      let colorMap = new Map;
+      for (let course of this.courses)
+        colorMap.set(course.id, colors[color++]);
+
+      this.currentResult = ids.map(id => {
+        let section = this.$store.getters.sectionById(id);
+
+        return {
+          section,
+          color: colorMap.get(Course.id(section.course)),
+          locked: this.settings.locked.includes(id),
+        };
+      });
     },
 
     onKeyDown(e) {
       if (e.keyCode == 13 && this.input && !this.isLoadingInput) this.submit();
     },
 
-    async submit() {
-      let id = this.input;
-
-      this.rawInput = '';
-
+    async addCourse(id, enabled) {
       if (this.courses.find(c => c.id == id))
         return;
+
+      if (enabled === undefined)
+        enabled = true;
 
       this.isLoadingInput = true;
       let course = await this.$store.dispatch('load', id);
@@ -196,9 +210,16 @@ export default {
 
       this.courses.push({
         id: id,
-        label: `${course.subjectId} ${course.courseId}`,
-        enabled: true,
+        label: Course.name(course),
+        enabled: enabled,
       });
+    },
+
+    async submit() {
+      let id = this.input;
+
+      this.rawInput = '';
+      await this.addCourse(id);
     },
   },
 };

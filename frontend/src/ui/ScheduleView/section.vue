@@ -21,15 +21,15 @@
 
         <v-layout px-1 justify-space-around class="row">
           <div class="number">
-            <span>{{ block.section.id }}</span>
+            <span class="tooltip" title="Section ID">{{ block.section.id }}</span>
           </div>
 
           <div class="location" style="flex: 0 0 auto">
             <span>{{ block.meeting.location }}</span>
           </div>
 
-          <div class="occurences">
-            <span v-if="interactive && block.isPreview">{{ block.occurences }}</span>
+          <div class="occurrences">
+            <span class="tooltip" title="Schedules that include this section" v-if="interactive && block.isPreview">{{ block.occurrences }}</span>
           </div>
         </v-layout>
       </v-layout>
@@ -83,7 +83,7 @@ export default {
     },
 
     color() {
-      if (this.interactive && this.block.isPreview && this.block.occurences == 0) {
+      if (this.interactive && this.block.isPreview && this.block.occurrences == 0) {
         return 'gray';
       }
 
@@ -169,6 +169,10 @@ export default {
 </script>
 
 <style scoped lang="scss">
+.tooltip {
+  cursor: help;
+}
+
 .section {
   cursor: default;
 
@@ -247,7 +251,7 @@ export default {
     }
   }
 
-  .occurences {
+  .occurrences {
     text-align: end;
   }
 }

@@ -1,8 +1,14 @@
 <template>
   <v-app>
     <v-layout>
-      <generator v-model="schedule" :settings="settings"/>
-      <schedule-view :settings="settings" :schedule="schedule" @lock="lock" @hide="hide"/>
+      <generator v-model="output" :settings="settings"/>
+      <schedule-view
+        :settings="settings"
+        :schedule="output.schedule"
+        :occurrences="output.occurrences"
+        @lock="lock"
+        @hide="hide"
+      />
     </v-layout>
   </v-app>
 </template>
@@ -24,7 +30,7 @@ export default {
 
   data() {
     return {
-      schedule: [],
+      output: { schedule: [], occurrences: {} },
       settings: {
         locked: [],
         hidden: [],

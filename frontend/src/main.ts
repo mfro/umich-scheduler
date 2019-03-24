@@ -3,13 +3,9 @@ import './plugins/vuetify'
 
 import Vue from 'vue'
 import App from '@/main.vue'
-import store, { parseCSV } from '@/store'
+import store from '@/store'
 
 import '@/util/keyboard';
-import request from './util/request';
-
-import wGenerate from 'worker-loader!./worker/generate';
-import wGenerate2 from 'worker-loader!./worker/generate-v2';
 
 Vue.config.productionTip = false
 
@@ -54,29 +50,3 @@ new Vue({
   store,
   render: h => h(App)
 }).$mount('#app');
-
-(window as any).test = async function() {
-  let tasks = [
-    request<string>(`http://localhost:8081/term/FA2019/course/EECS281`),
-    request<string>(`http://localhost:8081/term/FA2019/course/EECS370`),
-    request<string>(`http://localhost:8081/term/FA2019/course/EECS376`),
-  ];
-
-  let csvs = await Promise.all(tasks);
-  let csv = csvs.join('');
-
-  let courses = [...parseCSV(csv)];
-
-  let w1 = new wGenerate();
-
-  w1.postMessage({
-    type: 'generate',
-    courses: courses,
-    hidden: [],
-    locked: [],
-  });
-
-  let w2 = new wGenerate2();
-
-  w2.postMessage(csv);
-}

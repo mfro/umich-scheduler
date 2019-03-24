@@ -10,6 +10,14 @@ export interface Course {
 }
 
 export namespace Course {
+    export function id(course: Course) {
+        return `${course.subjectId}${course.courseId}`;
+    }
+
+    export function name(course: Course) {
+        return `${course.subjectId} ${course.courseId}`;
+    }
+
     export function parse(fields: string[]): Course {
         return {
             courseId: parseInt(fields[5]),
