@@ -9,25 +9,21 @@ if ('WorkerGlobalScope' in self) {
     function tick(gen: Generator) {
         if (gen != instance) return;
 
-        let complete = false;
-
-        for (let i = 0; i < 50000; ++i) {
-            if (gen.next() == null) {
-                complete = true;
-                break;
-            }
-        }
+        let limit = performance.now() + 50;
+        let paused = gen.next(() => {
+            return limit < performance.now();
+        });
 
         context.postMessage({
             type: 'progress',
             body: {
-                complete: complete,
+                complete: !paused,
                 occurrences: gen.occurrences,
                 scheduleCount: gen.schedules.length,
             },
         });
 
-        if (!complete) {
+        if (paused) {
             setTimeout(tick.bind(null, gen), 1);
         }
     }
@@ -159,60 +155,40 @@ export class Generator {
         }
     }
 
-    next() {
-        if (this.segments.length == 0) return null;
+    next(stop: () => boolean) {
+        if (this.segments.length == 0) return true;
 
-        let done = this.buildHelper([], 0);
-        if (done) return null;
-
-        let final = this.schedules[this.schedules.length - 1];
-
-        for (let section of final) {
-            if (!this.occurrences[section.id])
-                this.occurrences[section.id] = 1;
-            else
-                this.occurrences[section.id]++;
-        }
-
-        return final;
+        return !this.buildHelper([], 0, stop);
     }
 
-    buildHelper(schedule: Section[], index: number): boolean {
+    buildHelper(schedule: Section[], index: number, stop: () => boolean): boolean {
+        if (index == this.segments.length) {
+            this.schedules.push(schedule);
+            for (let section of schedule)
+                this.occurrences[section.id] = (this.occurrences[section.id] || 0) + 1;
+            return !stop();
+        }
+
         let segment = this.segments[index];
 
         primaryLoop:
-        while (true) {
-            if (segment.index == segment.options.length) {
-                segment.index = 0;
-                return true;
-            }
-
+        for (; segment.index < segment.options.length; ++segment.index) {
             let build = schedule.slice();
 
             for (let section of segment.options[segment.index]) {
                 if (!this.isValid(build, section)) {
-                    ++segment.index;
                     continue primaryLoop;
                 }
 
                 build.push(section);
             }
 
-            if (index + 1 == this.segments.length) {
-                ++segment.index;
-                this.schedules.push(build);
-
+            if (!this.buildHelper(build, index + 1, stop))
                 return false;
-            } else {
-                let advance = this.buildHelper(build, index + 1);
-                if (advance) {
-                    ++segment.index;
-                    continue primaryLoop;
-                }
-
-                return false;
-            }
         }
+
+        segment.index = 0;
+        return true;
     }
 
     /**

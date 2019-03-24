@@ -1,8 +1,8 @@
 <template>
-  <v-card class="generator">
-    <v-card-title>
+  <v-layout column>
+    <div class="pa-3">
       <span class="title">Schedule generator</span>
-    </v-card-title>
+    </div>
 
     <v-list class="list">
       <schedule-course
@@ -34,7 +34,7 @@
       </v-layout>
     </v-list>
 
-    <v-card-actions class="nav-area" v-if="status" :class="{ active: status != null }">
+    <div class="nav-area" v-if="status" :class="{ active: status != null }">
       <v-btn icon @click="--index" :disabled="index == 0">
         <v-icon>chevron_left</v-icon>
       </v-btn>
@@ -46,10 +46,9 @@
       <v-btn icon @click="++index" :disabled="index + 1 == status.scheduleCount">
         <v-icon>chevron_right</v-icon>
       </v-btn>
-    </v-card-actions>
-
+    </div>
     <v-progress-linear class="progress" :class="{ active: isGenerating }" indeterminate/>
-  </v-card>
+  </v-layout>
 </template>
 
 <script>
@@ -122,7 +121,7 @@ export default {
 
     output() {
       if (!this.currentResult || !this.status)
-        return;
+        return null;
 
       return { schedule: this.currentResult, occurrences: this.status.occurrences };
     },
@@ -134,8 +133,6 @@ export default {
       this.index = 0;
 
       generate.start(value);
-
-      this.isGenerating = false;
     },
 
     async index(value) {
@@ -167,11 +164,18 @@ export default {
 
   methods: {
     onProgress(e) {
-      this.status = e;
+      if (e.scheduleCount == 0) {
+        this.status = null;
+        this.isGenerating = false;
+      } else {
+        this.status = e;
+        this.isGenerating = !e.complete;
+      }
       this.getCurrentResult();
     },
 
     async getCurrentResult() {
+      if (!this.status) return this.currentResult = null;
       let ids = await generate.get(this.index);
 
       let color = 0;

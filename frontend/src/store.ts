@@ -5,10 +5,9 @@ import request from '@/util/request';
 
 Vue.use(Vuex)
 
-const TERM = 'FA2019';
-
 export default new Vuex.Store({
   state: {
+    term: null as string | null,
     courses: [] as Course[],
     sections: [] as Section[],
   },
@@ -21,6 +20,10 @@ export default new Vuex.Store({
     },
   },
   mutations: {
+    SET_TERM(s, term: string) {
+      s.term = term;
+    },
+
     ADD_COURSE(s, courses: Course | Course[]) {
       if (!(courses instanceof Array))
         courses = [courses];
@@ -39,11 +42,11 @@ export default new Vuex.Store({
     },
   },
   actions: {
-    async load({ commit, getters }, id) {
+    async load({ commit, getters, state }, id) {
       let old = getters.courseById(id);
       if (old) return old;
 
-      const csv = await request<string>(`http://localhost:8081/term/${TERM}/course/${id}`);
+      const csv = await request<string>(`http://localhost:8081/term/${state.term}/course/${id}`);
 
       let courses = new Map<string, Course>();
       parseCSV(csv, courses);

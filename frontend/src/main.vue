@@ -1,23 +1,57 @@
 <template>
   <v-app>
-    <v-layout>
-      <generator v-model="output" :settings="settings"/>
+    <v-layout v-if="term">
+      <v-layout column class="sidebar">
+        <generator v-model="output" :settings="settings"/>
+      </v-layout>
+
       <schedule-view
+        v-if="output"
         :settings="settings"
         :schedule="output.schedule"
         :occurrences="output.occurrences"
         @lock="lock"
         @hide="hide"
       />
+      <v-layout v-else>
+        <div class="pa-4">
+          <p>Find courses using the <a href="https://www.lsa.umich.edu/cg/" target="_blank">course guide</a>.</p>
+
+          <p>Add courses on the left side of the screen.</p>
+
+          <p>Use the calendar view to customize the generation.</p>
+
+          <p>Mouse clicks or key bindings can be used interchangeably. Key bindings are mostly useful with a trackpad or bad mouse.</p>
+
+          <p>- Left click or Q 'locks' a section</p>
+
+          <p>- Middle click or W previews alternatives to a section</p>
+
+          <p>- Right click or E 'hides' a section</p>
+
+          <p>Adjust the view by clicking on the time labels on the left side.</p>
+
+          <p>It will generate all valid courses in the background, you can continue to customize while it does.</p>
+        </div>
+      </v-layout>
+    </v-layout>
+    <v-layout v-else align-center justify-center>
+      <v-card>
+        <term-selector v-model="term" />
+      </v-card>
     </v-layout>
   </v-app>
 </template>
 
 <script>
 import Vue from 'vue';
+import { mapState } from 'vuex';
 
 import Generator from '@/ui/Generator';
 import ScheduleView from '@/ui/ScheduleView';
+
+import TermSelector from '@/ui/TermSelector';
+
 import { Section } from './model';
 
 export default {
@@ -26,16 +60,26 @@ export default {
   components: {
     Generator,
     ScheduleView,
+    TermSelector,
   },
 
   data() {
     return {
-      output: { schedule: [], occurrences: {} },
+      output: null,
       settings: {
         locked: [],
         hidden: [],
       },
     };
+  },
+
+  computed: {
+    ...mapState(['term']),
+
+    classIds() {
+      if (!this.output) return '';
+      return this.output.schedule.map(s => s.section.id).join('\n');
+    },
   },
 
   methods: {
@@ -79,6 +123,14 @@ export default {
   },
 };
 </script>
+
+<style lang="scss" scoped>
+.sidebar {
+  flex: 0 0 auto !important;
+  background: white;
+}
+</style>
+
 
 <style lang="scss">
 body {
