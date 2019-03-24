@@ -1,85 +1,98 @@
-import { Course, Section, SectionMeeting } from '@/model';
+import { Course, Section } from '@/model';
 
-const courses = new Map<string, Course>();
-const work = self as unknown as Worker;
+if ('WorkerGlobalScope' in self) {
+    const courses = new Map<string, Course>();
+    const context = self as unknown as Worker;
 
-let instance: Generator | null = null;
+    let instance: Generator | null = null;
 
-function tick(gen: Generator) {
-    if (gen != instance) return;
+    function tick(gen: Generator) {
+        if (gen != instance) return;
 
-    let complete = false;
+        let complete = false;
 
-    for (let i = 0; i < 10000; ++i) {
-        if (gen.next() == null) {
-            complete = true;
-            break;
+        for (let i = 0; i < 50000; ++i) {
+            if (gen.next() == null) {
+                complete = true;
+                break;
+            }
+        }
+
+        context.postMessage({
+            type: 'progress',
+            body: {
+                complete: complete,
+                occurrences: gen.occurrences,
+                scheduleCount: gen.schedules.length,
+            },
+        });
+
+        if (!complete) {
+            setTimeout(tick.bind(null, gen), 1);
         }
     }
 
-    work.postMessage({
-        type: 'progress',
-        body: {
-            complete: complete,
-            occurrences: gen.occurrences,
-            scheduleCount: gen.schedules.length,
-        },
+    context.addEventListener('message', async e => {
+        switch (e.data.type) {
+            case 'courses': {
+                let args = e.data.body as Course[];
+                for (let course of args) {
+                    courses.set(Course.id(course), course);
+                }
+                break;
+            }
+            case 'get': {
+                let index = e.data.body as number;
+
+                let result;
+                if (!instance || index < 0 || index >= instance.schedules.length)
+                    result = null;
+                else
+                    result = instance.schedules[index].map(s => s.id);
+
+                context.postMessage({
+                    type: 'get',
+                    body: result,
+                });
+                break;
+            }
+            case 'run': {
+                let args = e.data.body as {
+                    courses: string[],
+                    hidden: number[],
+                    locked: number[],
+                }
+
+                let input = {
+                    courses: args.courses.map(id => courses.get(id)).filter(c => c) as Course[],
+                    hidden: args.hidden,
+                    locked: args.locked,
+                };
+
+                instance = new Generator(input);
+                tick(instance);
+                break;
+            }
+        }
     });
-
-    if (!complete) {
-        setTimeout(tick.bind(null, gen), 1);
-    }
 }
-
-work.addEventListener('message', async e => {
-    switch (e.data.type) {
-        case 'courses': {
-            let args = e.data.body as Course[];
-            for (let course of args) {
-                courses.set(Course.id(course), course);
-            }
-            break;
-        }
-        case 'get': {
-            let index = e.data.body as number;
-
-            let result;
-            if (!instance || index < 0 || index >= instance.schedules.length)
-                result = null;
-            else
-                result = instance.schedules[index].map(s => s.id);
-
-            work.postMessage({
-                type: 'get',
-                body: result,
-            });
-            break;
-        }
-        case 'run': {
-            let args = e.data.body as {
-                courses: string[],
-                hidden: number[],
-                locked: number[],
-            }
-
-            let input = {
-                courses: args.courses.map(id => courses.get(id)).filter(c => c) as Course[],
-                hidden: args.hidden,
-                locked: args.locked,
-            };
-
-            instance = new Generator(input);
-            tick(instance);
-            break;
-        }
-    }
-});
 
 export interface Input {
     courses: Course[];
     hidden: number[];
     locked: number[];
 }
+
+function dualId(a: Section, b: Section) {
+    if ((a.id & 0xFFFF) != a.id)
+        console.warn(`large section id: ${a.id}`);
+    if ((b.id & 0xFFFF) != b.id)
+        console.warn(`large section id: ${b.id}`);
+    if (a.id < b.id)
+        return (a.id << 16) | b.id;
+    return (b.id << 16) | a.id;
+}
+
 
 export class Generator {
     locked: Set<number>;
@@ -90,9 +103,23 @@ export class Generator {
     schedules: Section[][] = [];
     occurrences: { [id: number]: number } = {};
 
+    compatibility = new Set<number>();
+
     constructor(
         readonly input: Input,
     ) {
+        for (let c1 of input.courses) {
+            for (let s1 of c1.sections) {
+                for (let c2 of input.courses) {
+                    for (let s2 of c2.sections) {
+                        if (Section.isCompatible(s1, s2)) {
+                            this.compatibility.add(dualId(s1, s2));
+                        }
+                    }
+                }
+            }
+        }
+
         this.locked = new Set(input.locked);
         this.hidden = new Set(input.hidden);
 
@@ -133,6 +160,8 @@ export class Generator {
     }
 
     next() {
+        if (this.segments.length == 0) return null;
+
         let done = this.buildHelper([], 0);
         if (done) return null;
 
@@ -192,11 +221,11 @@ export class Generator {
      * @param section Potential addition
      */
     isValid(schedule: Section[], section: Section) {
-        if (this.input.hidden.indexOf(section.id) != -1)
+        if (this.hidden.has(section.id))
             return false;
 
         for (let existing of schedule) {
-            if (!Section.isCompatible(section, existing)) {
+            if (!this.compatibility.has(dualId(section, existing))) {
                 return false;
             }
         }

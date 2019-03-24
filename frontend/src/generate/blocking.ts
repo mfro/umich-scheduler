@@ -1,56 +1,68 @@
 import { Course, Section } from '@/model';
 
-const MAX_COUNT = 1000000;
+if ('WorkerGlobalScope' in self) {
+    const MAX_COUNT = 1000000;
 
-const courses = new Map<string, Course>();
-const work = self as unknown as Worker;
+    const courses = new Map<string, Course>();
+    const context = self as unknown as Worker;
 
-work.addEventListener('message', async e => {
-    switch (e.data.type) {
-        case 'courses': {
-            let args = e.data.body as Course[];
-            for (let course of args) {
-                courses.set(Course.id(course), course);
+    context.addEventListener('message', async e => {
+        switch (e.data.type) {
+            case 'courses': {
+                let args = e.data.body as Course[];
+                for (let course of args) {
+                    courses.set(Course.id(course), course);
+                }
+                break;
             }
-            break;
-        }
-        case 'run': {
-            let args = e.data.body as {
-                courses: string[],
-                hidden: number[],
-                locked: number[],
+            case 'run': {
+                let args = e.data.body as {
+                    courses: string[],
+                    hidden: number[],
+                    locked: number[],
+                }
+
+                let input = {
+                    courses: args.courses.map(id => courses.get(id)).filter(c => c) as Course[],
+                    hidden: args.hidden,
+                    locked: args.locked,
+                };
+
+                let start = performance.now();
+
+                let instance = new Generator(input);
+                instance.run(MAX_COUNT);
+
+                let end = performance.now();
+                console.log(`generated ${instance.schedules.length} in ${end - start} (${start} -> ${end})`);
+
+                context.postMessage({
+                    type: 'run',
+                    body: {
+                        occurrences: instance.occurrences,
+                        schedules: instance.schedules.map(s => s.map(e => e.id)),
+                    },
+                });
+                break;
             }
-
-            let input = {
-                courses: args.courses.map(id => courses.get(id)).filter(c => c) as Course[],
-                hidden: args.hidden,
-                locked: args.locked,
-            };
-
-            let start = performance.now();
-
-            let instance = new Generator(input);
-            instance.run(MAX_COUNT);
-
-            let end = performance.now();
-            console.log(`generated ${instance.schedules.length} in ${end - start} (${start} -> ${end})`);
-
-            work.postMessage({
-                type: 'run',
-                body: {
-                    occurrences: instance.occurrences,
-                    schedules: instance.schedules.map(s => s.map(e => e.id)),
-                },
-            });
-            break;
         }
-    }
-});
+    });
+}
 
-interface Input {
+export interface Input {
     courses: Course[];
     hidden: number[];
     locked: number[];
+}
+
+function dualId(a: Section, b: Section) {
+    if ((a.id & 0xFFFF) != a.id)
+        console.warn(`large section id: ${a.id}`);
+    if ((b.id & 0xFFFF) != b.id)
+        console.warn(`large section id: ${b.id}`);
+    if (a.id < b.id)
+        return (a.id << 16) | b.id;
+    return (b.id << 16) | a.id;
 }
 
 export class Generator {
@@ -62,9 +74,23 @@ export class Generator {
     schedules: Section[][] = [];
     occurrences: { [id: number]: number } = {};
 
+    compatibility = new Set<number>();
+
     constructor(
         readonly input: Input,
     ) {
+        for (let c1 of input.courses) {
+            for (let s1 of c1.sections) {
+                for (let c2 of input.courses) {
+                    for (let s2 of c2.sections) {
+                        if (Section.isCompatible(s1, s2)) {
+                            this.compatibility.add(dualId(s1, s2));
+                        }
+                    }
+                }
+            }
+        }
+
         this.locked = new Set(input.locked);
         this.hidden = new Set(input.hidden);
 
@@ -112,10 +138,8 @@ export class Generator {
             return this.schedules.length < limit;
         }
 
-        let segment = this.segments[index];
-
         optionLoop:
-        for (let group of segment) {
+        for (let group of this.segments[index]) {
             let build = schedule.slice();
 
             for (let section of group) {
@@ -142,7 +166,7 @@ export class Generator {
             return false;
 
         for (let existing of schedule) {
-            if (!Section.isCompatible(section, existing)) {
+            if (!this.compatibility.has(dualId(section, existing))) {
                 return false;
             }
         }
