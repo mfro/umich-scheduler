@@ -26,11 +26,13 @@ async function fetch(term, currentTag) {
         }, res => {
             if (res.statusCode == 304) {
                 resolve(null)
-            } else {
+            } else if (res.statusCode == 200) {
                 resolve({
                     tag: res.headers.etag,
                     data: res,
                 });
+            } else {
+                reject({ code: 404, error: 'term not found' })
             }
         });
 

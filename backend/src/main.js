@@ -25,7 +25,7 @@ function wrap(fn) {
             }
 
             res.statusCode = code;
-            res.json({ error });
+            res.json({ code, error });
         });
     };
 }
