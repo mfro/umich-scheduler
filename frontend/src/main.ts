@@ -3,6 +3,8 @@ import './plugins/vuetify'
 
 import Vue from 'vue'
 import App from '@/main.vue'
+
+import router from '@/router';
 import store from '@/store'
 
 import '@/util/keyboard';
@@ -50,6 +52,7 @@ Vue.prototype.$use = function (release: () => void) {
 
 new Vue({
   store,
+  router,
   render: h => h(App)
 }).$mount('#app');
 

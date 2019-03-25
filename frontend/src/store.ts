@@ -1,13 +1,14 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
-import { Course, Section, SectionMeeting, parseCSV } from '@/model';
+import { Course, Section, parseCSV } from '@/model';
 import request from '@/util/request';
+
+import router from '@/router';
 
 Vue.use(Vuex)
 
 export default new Vuex.Store({
   state: {
-    term: null as string | null,
     courses: [] as Course[],
     sections: [] as Section[],
   },
@@ -20,10 +21,6 @@ export default new Vuex.Store({
     },
   },
   mutations: {
-    SET_TERM(s, term: string) {
-      s.term = term;
-    },
-
     ADD_COURSE(s, courses: Course | Course[]) {
       if (!(courses instanceof Array))
         courses = [courses];
@@ -46,7 +43,8 @@ export default new Vuex.Store({
       let old = getters.courseById(id);
       if (old) return old;
 
-      const csv = await request<string>(`http://localhost:8081/term/${state.term}/course/${id}`);
+      const term = router.currentRoute.params.term;
+      const csv = await request<string>(`http://localhost:8081/term/${term}/course/${id}`);
 
       let courses = new Map<string, Course>();
       parseCSV(csv, courses);
