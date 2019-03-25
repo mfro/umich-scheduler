@@ -1,7 +1,7 @@
 <template>
   <v-layout>
     <v-navigation-drawer permanent>
-      <v-layout column class="sidebar">
+      <v-layout column fill-height class="sidebar">
         <generator v-model="output" :settings="settings"/>
 
         <div class="pa-3">

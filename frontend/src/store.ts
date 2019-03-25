@@ -5,7 +5,11 @@ import request from '@/util/request';
 
 import router from '@/router';
 
-Vue.use(Vuex)
+Vue.use(Vuex);
+
+let host = 'https://api.mfro.me/scheduler';
+if (location.hostname == 'localhost:8080')
+  host = 'http://localhost:8081';
 
 export default new Vuex.Store({
   state: {
@@ -44,7 +48,7 @@ export default new Vuex.Store({
       if (old) return old;
 
       const term = router.currentRoute.params.term;
-      const csv = await request<string>(`http://localhost:8081/term/${term}/course/${id}`);
+      const csv = await request<string>(`${host}/term/${term}/course/${id}`);
 
       let courses = new Map<string, Course>();
       parseCSV(csv, courses);
