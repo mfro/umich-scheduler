@@ -23,7 +23,7 @@ export namespace SectionMeeting {
         if (b.time == 'ARR')
             return { start: 0, end: 0 };
 
-        let match = /(\d\d?)(30)?-(\d\d?)(30)?(\D+)/.exec(b.time);
+        let match = /(\d\d?)(30)?-(\d\d?)(30)?(AM|PM)/.exec(b.time);
 
         if (!match) {
             console.warn('Failed to parse time: ' + b.time);
@@ -37,12 +37,6 @@ export namespace SectionMeeting {
         if (match[4]) end += parseInt(match[4]) / 60;
 
         let id = match[5];
-
-        if (id != 'AM' && id != 'PM') {
-            console.warn('Failed to parse time: ' + b.time);
-            return { start: 0, end: 0 };
-        }
-
         if (id == 'PM' && end < 12) {
             end += 12;
 

@@ -8,7 +8,7 @@ import router from '@/router';
 Vue.use(Vuex);
 
 let host = 'https://api.mfro.me/scheduler';
-if (location.hostname == 'localhost:8080')
+if (location.hostname == 'localhost')
   host = 'http://localhost:8081';
 
 export default new Vuex.Store({
