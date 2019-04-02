@@ -34,7 +34,7 @@
       </v-layout>
     </v-list>
 
-    <div class="nav-area" v-if="status" :class="{ active: status != null }">
+    <div class="nav-area" v-if="status && status.scheduleCount > 0" :class="{ active: status != null }">
       <v-btn icon @click="--index" :disabled="index == 0">
         <v-icon>chevron_left</v-icon>
       </v-btn>
@@ -58,6 +58,8 @@ import ScheduleCourse from './ScheduleCourse';
 
 import { Course } from '@/model';
 import * as generate from '@/generate';
+
+import { translate } from '@/model/generalize';
 
 const colors = [
   '#16a765',
@@ -110,20 +112,38 @@ export default {
     generateArgs() {
       let courses = this.courses
         .filter(c => c.enabled)
-        .map(c => c.id);
+        .map(c => this.$store.getters.courseById(c.id));
 
-      return {
-        courses,
-        locked: this.settings.locked,
-        hidden: this.settings.hidden,
-      };
+      let t = translate(courses, this.settings.locked, this.settings.hidden);
+
+      for (let custom of this.settings.custom) {
+        t.segments.push([
+          custom.days.map(day => ({
+            day, start: custom.start, end: custom.end
+          })),
+        ]);
+      }
+
+      return t;
     },
 
     output() {
       if (!this.currentResult || !this.status)
         return null;
 
-      return { schedule: this.currentResult, occurrences: this.status.occurrences };
+      let occurrences = {};
+      for (let i = 0; i < this.status.sections.length; ++i) {
+        for (let j = 0; j < this.status.sections[i].length; ++j) {
+          let sections = this.status.sections[i][j];
+          for (let section of sections) {
+            occurrences[section.id] = this.status.occurrences[i][j];
+          }
+        }
+      }
+
+      return {
+        schedule: this.currentResult, occurrences
+      };
     },
   },
 
@@ -132,7 +152,7 @@ export default {
       this.isGenerating = true;
       this.index = 0;
 
-      generate.start(value);
+      generate.start(value.segments);
     },
 
     async index(value) {
@@ -164,11 +184,11 @@ export default {
 
   methods: {
     onProgress(e) {
-      if (e.scheduleCount == 0) {
+      if (e.scheduleCount == 0 && e.complete) {
         this.status = null;
         this.isGenerating = false;
       } else {
-        this.status = e;
+        this.status = { ...e, sections: this.generateArgs.sections };
         this.isGenerating = !e.complete;
       }
       this.getCurrentResult();
@@ -176,20 +196,22 @@ export default {
 
     async getCurrentResult() {
       if (!this.status) return this.currentResult = null;
-      let ids = await generate.get(this.index);
+      let idxs = await generate.get(this.index);
+      if (!idxs) return this.currentResult = null;
+
+      idxs = idxs.slice(0, this.status.sections.length);
+      let sections = idxs.map((j, i) => this.status.sections[i][j]).flat();
 
       let color = 0;
       let colorMap = new Map;
       for (let course of this.courses)
         colorMap.set(course.id, colors[color++]);
 
-      this.currentResult = ids.map(id => {
-        let section = this.$store.getters.sectionById(id);
-
+      this.currentResult = sections.map(section => {
         return {
           section,
           color: colorMap.get(Course.id(section.course)),
-          locked: this.settings.locked.includes(id),
+          locked: this.settings.locked.includes(section.id),
         };
       });
     },

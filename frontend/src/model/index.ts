@@ -1,8 +1,8 @@
 import { Course } from './course';
-import { Section } from './section';
+import { Section, days } from './section';
 import { SectionMeeting } from './sectionmeeting';
 
-export { Course, Section, SectionMeeting };
+export { days, Course, Section, SectionMeeting };
 
 export function parseCSV(csv: string, courses: Map<string, Course>) {
     let sections = new Map<number, Section>();

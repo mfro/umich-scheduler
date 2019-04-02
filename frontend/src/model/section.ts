@@ -1,7 +1,7 @@
 import { Course } from './course';
 import { SectionMeeting } from './sectionmeeting';
 
-const days = ['M', 'T', 'W', 'TH', 'F', 'S', 'SU'];
+export const days = ['M', 'T', 'W', 'TH', 'F', 'S', 'SU'];
 
 export interface Section {
     readonly id: number;
@@ -48,8 +48,6 @@ export namespace Section {
 
                     if (aTime.start >= bTime.start && aTime.start < bTime.end)
                         return true;
-
-                    return false;
                 }
             }
         }

@@ -89,7 +89,6 @@ function dualId(a: Section, b: Section) {
     return (b.id << 16) | a.id;
 }
 
-
 export class Generator {
     locked: Set<number>;
     hidden: Set<number>;
@@ -162,13 +161,6 @@ export class Generator {
     }
 
     buildHelper(schedule: Section[], index: number, stop: () => boolean): boolean {
-        if (index == this.segments.length) {
-            this.schedules.push(schedule);
-            for (let section of schedule)
-                this.occurrences[section.id] = (this.occurrences[section.id] || 0) + 1;
-            return !stop();
-        }
-
         let segment = this.segments[index];
 
         primaryLoop:
@@ -183,8 +175,18 @@ export class Generator {
                 build.push(section);
             }
 
-            if (!this.buildHelper(build, index + 1, stop))
+            if (index + 1 == this.segments.length) {
+                this.schedules.push(build);
+                for (let section of build)
+                    this.occurrences[section.id] = (this.occurrences[section.id] || 0) + 1;
+
+                if (stop()) {
+                    ++segment.index;
+                    return false;
+                }
+            } else if (!this.buildHelper(build, index + 1, stop)) {
                 return false;
+            }
         }
 
         segment.index = 0;
@@ -215,6 +217,7 @@ export class Generator {
  * The auto-enrolls are chosen as follows:
  *  - 1 of each 'component'
  *  - the highest section number that is less than the primary-enroll
+ * therefore each auto-enroll is attached to the 'next' primary-enroll
  */
 
 /**

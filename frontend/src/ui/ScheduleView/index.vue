@@ -61,6 +61,7 @@
           @hide="onHide"
           @lock="onLock"
           @preview="onPreview"
+          @custom="$emit('custom', $event)"
         />
       </div>
     </div>
@@ -72,6 +73,8 @@ import { mapGetters } from 'vuex';
 
 import CalendarDay from './day.vue';
 import * as blocks from './blocks';
+
+import Input from '@/util/input';
 
 const days = [
   { name: 'Monday', id: 'M' },
@@ -149,7 +152,7 @@ export default {
     },
 
     activeBlocks() {
-      let base = [].concat(...this.schedule.map(s => blocks.generated(s)));
+      let base = this.settings.custom.concat(...this.schedule.map(s => blocks.generated(s)));
       let target = this.previewTarget;
       if (!target) return base;
 
@@ -190,9 +193,11 @@ export default {
   methods: {
     onHide(block) {
       if (!this.interactive) return;
-      if (!block.isCourse) return;
 
-      this.$emit('hide', block.section.id);
+      if (block.isCourse)
+        this.$emit('hide', block.section.id);
+      if (block.isCustom)
+        this.$emit('custom', block);
     },
 
     onLock(block) {
@@ -269,7 +274,7 @@ export default {
     padding-right: 8px;
 
     &.fade {
-      color: rgba(0,0,0,.5)
+      color: rgba(0, 0, 0, 0.5);
     }
   }
 

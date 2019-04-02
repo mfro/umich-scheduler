@@ -4,15 +4,18 @@
     :class="classes"
     :style="style"
     v-hover="hover"
-    @mouseup="onClick"
-    @contextmenu.prevent="onContextMenu"
   >
     <div class="sideline" :style="sidelineStyle"/>
 
     <v-flex class="content">
       <div class="background" :style="backgroundStyle"/>
 
-      <v-layout column class="text">
+
+      <v-layout column class="text" v-if="block.isCustom">
+        <span class="id">{{ block.id }}</span>
+      </v-layout>
+
+      <v-layout column class="text" v-else-if="block.isCourse">
         <span class="id">{{ id }}</span>
 
         <div>
@@ -41,6 +44,7 @@
 import { mapGetters } from 'vuex';
 
 import * as keyboard from '@/util/keyboard';
+import Input from '@/util/input';
 
 export default {
   name: 'calendar-section',
@@ -76,7 +80,7 @@ export default {
 
     classes() {
       return {
-        lock: this.block.isGenerated && this.block.isLocked,
+        lock: (this.block.isGenerated && this.block.isLocked) || (this.block.isCustom),
         hidden: this.block.isPreview && this.block.isHidden,
         interactive: this.interactive,
       };
@@ -111,7 +115,7 @@ export default {
       let top = (this.block.start - this.display.dayStart) / (this.display.dayEnd - this.display.dayStart);
 
       return {
-        width: `calc(100% - ${8 * (this.group.size - 1)}px)`,
+        width: `calc(100% - ${8 * (this.group.size)}px)`,
         height: `${size.height * height}px`,
         top: `${size.height * top}px`,
         marginLeft: `${8 * this.group.index}px`,
@@ -120,9 +124,24 @@ export default {
   },
 
   created() {
-    this.$use(keyboard.onPress(keyboard.Q, () => this.hover && this.lock()));
-    this.$use(keyboard.onPress(keyboard.W, () => this.hover && this.preview()));
-    this.$use(keyboard.onPress(keyboard.E, () => this.hover && this.hide()));
+    this.$use(Input.onPress(Input.A, m => {
+      if (!this.hover) return;
+      Input.consume();
+      this.lock();
+    }));
+
+    this.$use(Input.onPress(Input.B, m => {
+      console.log('x', this.hover);
+      if (!this.hover) return;
+      Input.consume();
+      this.hide();
+    }));
+
+    this.$use(Input.onPress(Input.C, m => {
+      if (!this.hover) return;
+      Input.consume();
+      this.preview();
+    }));
   },
 
   mounted() {
@@ -138,31 +157,17 @@ export default {
 
   methods: {
     lock() {
+      if (this.block.isCustom) return;
       this.$emit('lock', this.block);
     },
 
     preview() {
+      if (this.block.isCustom) return;
       this.$emit('preview', this.block);
     },
 
     hide() {
       this.$emit('hide', this.block);
-    },
-
-    onContextMenu(e) {
-      if (!this.interactive) return;
-
-      this.hide();
-    },
-
-    onClick(e) {
-      if (e.button == 0) {
-        if (!this.interactive) return;
-
-        this.lock();
-      } else if (e.button == 1) {
-        this.preview();
-      }
     },
   },
 };

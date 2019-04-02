@@ -54,6 +54,14 @@ export function generated(src: ResultBlock): GeneratedCourseBlock[] {
     })
 }
 
+export function custom(days: string[], start: number, end: number, color: string): CustomBlock {
+    return {
+        isCustom: true,
+        id: days.join('') + `${start}-${end}`,
+        days, start, end, color
+    };
+}
+
 export interface Block {
     readonly id: string | number;
 
@@ -62,6 +70,10 @@ export interface Block {
     readonly start: number;
 
     readonly color: string;
+}
+
+export interface CustomBlock extends Block {
+    readonly isCustom: true;
 }
 
 export interface CourseBlock extends Block {

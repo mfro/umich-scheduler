@@ -22,6 +22,8 @@
 
           <p>- Right click or E 'hides' a section</p>
 
+          <p>- Left click or Q and drag to create blocks</p>
+
           <p>Adjust the view by clicking on the time labels on the left side.</p>
 
           <p>It will generate all valid courses in the background, you can continue to customize while it does.</p>
@@ -34,11 +36,18 @@
       :settings="settings"
       :schedule="output.schedule"
       :occurrences="output.occurrences"
-      @lock="lock"
-      @hide="hide"
+      @lock="onLock"
+      @hide="onHide"
+      @custom="onCustom"
     />
-    <v-layout v-else>
-    </v-layout>
+    <schedule-view v-else
+      :settings="settings"
+      :schedule="[]"
+      :occurrences="{}"
+      @lock="onLock"
+      @hide="onHide"
+      @custom="onCustom"
+    />
   </v-layout>
 </template>
 
@@ -65,6 +74,7 @@ export default {
       settings: {
         locked: [],
         hidden: [],
+        custom: [],
       },
     };
   },
@@ -81,7 +91,7 @@ export default {
   },
 
   methods: {
-    lock(value) {
+    onLock(value) {
       let i = this.settings.locked.indexOf(value);
       if (i != -1) {
         this.settings.locked.splice(i, 1);
@@ -104,7 +114,7 @@ export default {
       }
     },
 
-    hide(value) {
+    onHide(value) {
       let i = this.settings.hidden.indexOf(value);
       if (i != -1) {
         this.settings.hidden.splice(i, 1);
@@ -117,6 +127,14 @@ export default {
 
         this.settings.hidden.push(value);
       }
+    },
+
+    onCustom(value) {
+      let i = this.settings.custom.indexOf(value);
+      if (i != -1)
+        this.settings.custom.splice(i, 1);
+      else
+        this.settings.custom.push(value);
     },
   },
 };

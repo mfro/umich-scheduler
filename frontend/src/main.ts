@@ -10,6 +10,8 @@ import store from '@/store'
 import '@/util/keyboard';
 
 import * as nonBlocking from '@/generate/non-blocking';
+import * as general from '@/generate/general';
+import { translate } from '@/model/generalize';
 
 Vue.config.productionTip = false
 
@@ -40,14 +42,14 @@ Vue.directive('hover', {
 
 Vue.mixin({
   beforeDestroy(this: any) {
-    if (!this.$use.liist) return;
-    for (let release of this.$use.list) release();
+    if (!this.$using) return;
+    for (let release of this.$using) release();
   },
 });
 
 Vue.prototype.$use = function (release: () => void) {
-  if (!this.$use.list) this.$use.list = [];
-  this.$use.list.push(release);
+  if (!this.$using) this.$using = [];
+  this.$using.push(release);
 }
 
 new Vue({
@@ -56,10 +58,34 @@ new Vue({
   render: h => h(App)
 }).$mount('#app');
 
+function test1() {
+  let courses = [
+    store.getters.courseById('EECS203'),
+    store.getters.courseById('EECS281'),
+    store.getters.courseById('EECS370'),
+    store.getters.courseById('EECS376'),
+  ];
+
+  let t = translate(courses, [], []);
+
+  let generator = new general.Generator(t.segments);
+
+  let start = performance.now();
+
+  generator.next(() => false);
+
+  let end = performance.now();
+  console.log(`did ${generator.schedules.length} in ${end - start} (${start} -> ${end})`);
+
+  let s = generator.schedules[23];
+  let sections = s.map((j, i) => t.sections[i][j]).flat();
+  console.log(sections);
+}
+
 function test2() {
   let courses = [
-    // store.getters.courseById('EECS203'),
-    store.getters.courseById('EECS280'),
+    store.getters.courseById('EECS203'),
+    store.getters.courseById('EECS281'),
     store.getters.courseById('EECS370'),
     store.getters.courseById('EECS376'),
   ];
@@ -76,4 +102,5 @@ function test2() {
   console.log(`did ${generator.schedules.length} in ${end - start} (${start} -> ${end})`);
 }
 
+(self as any).test1 = test1;
 (self as any).test2 = test2;
