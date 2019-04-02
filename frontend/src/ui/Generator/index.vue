@@ -136,7 +136,7 @@ export default {
         for (let j = 0; j < this.status.sections[i].length; ++j) {
           let sections = this.status.sections[i][j];
           for (let section of sections) {
-            occurrences[section.id] = this.status.occurrences[i][j];
+            occurrences[section.id] = (occurrences[section.id] || 0) + this.status.occurrences[i][j];
           }
         }
       }
