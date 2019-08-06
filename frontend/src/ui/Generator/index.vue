@@ -34,7 +34,11 @@
       </v-layout>
     </v-list>
 
-    <div class="nav-area" v-if="status && status.scheduleCount > 0" :class="{ active: status != null }">
+    <div
+      class="nav-area"
+      v-if="status && status.scheduleCount > 0"
+      :class="{ active: status != null }"
+    >
       <v-btn icon @click="--index" :disabled="index == 0">
         <v-icon>chevron_left</v-icon>
       </v-btn>
@@ -47,7 +51,7 @@
         <v-icon>chevron_right</v-icon>
       </v-btn>
     </div>
-    <v-progress-linear class="progress" :class="{ active: isGenerating }" indeterminate/>
+    <v-progress-linear class="progress" :class="{ active: isGenerating }" indeterminate />
   </v-layout>
 </template>
 
@@ -155,7 +159,7 @@ export default {
       generate.start(value.segments);
     },
 
-    async index(value) {
+    index(value) {
       this.getCurrentResult();
     },
 
@@ -184,6 +188,8 @@ export default {
 
   methods: {
     onProgress(e) {
+      let first = !this.status || e.nonce != this.status.nonce;
+
       if (e.scheduleCount == 0 && e.complete) {
         this.status = null;
         this.isGenerating = false;
@@ -191,7 +197,10 @@ export default {
         this.status = { ...e, sections: this.generateArgs.sections };
         this.isGenerating = !e.complete;
       }
-      this.getCurrentResult();
+
+      if (first) {
+        this.getCurrentResult();
+      }
     },
 
     async getCurrentResult() {

@@ -27,21 +27,20 @@ if ('WorkerGlobalScope' in self) {
             if (gen != instance) return;
 
             let limit = performance.now() + 50;
-            let paused = gen.next(() => {
+            let complete = gen.next(() => {
                 return limit < performance.now();
             });
 
             context.postMessage({
                 type: 'progress',
                 body: {
-                    nonce,
-                    complete: !paused,
+                    nonce, complete,
                     occurrences: gen.occurrences,
                     scheduleCount: gen.schedules.length,
                 },
             });
 
-            if (!paused) {
+            if (complete) {
                 break;
             }
         }
@@ -151,28 +150,28 @@ export class Generator {
         }
     }
 
+    // returns true if completed
     next(stop: () => boolean) {
         if (this.segments.length == 0) return true;
 
-        return !this.buildHelper([], 0, stop);
+        return this.buildHelper([], 0, stop);
     }
 
-    buildHelper(schedule: number[], index: number, stop: () => boolean): boolean {
+    // returns true if completed
+    buildHelper(stack: number[], index: number, stop: () => boolean): boolean {
         let segment = this.segments[index];
 
         for (; segment.index < segment.options.length; ++segment.index) {
             let id = segment.options[segment.index];
-            if (!this.isValid(schedule, id)) {
+            if (!this.isValid(stack, id)) {
                 if (stop())
                     return false;
                 continue;
             }
 
-            let build = schedule.concat([id]);
-
+            stack.push(id);
             if (index + 1 == this.segments.length) {
-
-                let compiled = this.permutation.map(i => this.lookup[build[i]]);
+                let compiled = this.permutation.map(i => this.lookup[stack[i]]);
 
                 this.schedules.push(compiled);
                 for (let i = 0; i < compiled.length; ++i) {
@@ -183,8 +182,9 @@ export class Generator {
                     ++segment.index;
                     return false;
                 }
-            } else if (!this.buildHelper(build, index + 1, stop))
+            } else if (!this.buildHelper(stack, index + 1, stop))
                 return false;
+            stack.pop();
         }
 
         segment.index = 0;
@@ -193,12 +193,12 @@ export class Generator {
 
     /**
      * Checks if it is valid to add a section to a schedule
-     * @param schedule Existing schedule to compare
+     * @param index index of current segment
      * @param section Potential addition
      */
-    isValid(schedule: number[], id: number) {
-        for (let existing of schedule) {
-            if (!this.compatibility.has(this.dualId(existing, id))) {
+    isValid(stack: number[], add: number) {
+        for (let id of stack) {
+            if (!this.compatibility.has(this.dualId(id, add))) {
                 return false;
             }
         }

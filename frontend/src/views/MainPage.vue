@@ -1,7 +1,7 @@
 <template>
   <v-layout>
     <v-navigation-drawer permanent>
-      <v-layout column fill-height class="sidebar">
+      <v-layout column class="sidebar">
         <generator v-model="output" :settings="settings"/>
 
         <div class="pa-3">
@@ -26,7 +26,7 @@
 
           <p>Adjust the view by clicking on the time labels on the left side.</p>
 
-          <p>It will generate all valid courses in the background, you can continue to customize while it does.</p>
+          <p class="ma-0">It will generate all valid courses in the background, you can continue to customize while it does.</p>
         </div>
       </v-layout>
     </v-navigation-drawer>
@@ -142,6 +142,7 @@ export default {
 
 <style lang="scss" scoped>
 .sidebar {
+  height: 100vh;
   flex: 0 0 24em !important;
   background: white;
 }
